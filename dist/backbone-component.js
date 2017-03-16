@@ -1,0 +1,331 @@
+/*!
+ * backbone-component - Backbone + Handlebars components
+ * v0.1.0 - https://github.com/CSNW/backbone-component - @license: MIT
+ */
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('handlebars'), require('backbone')) :
+	typeof define === 'function' && define.amd ? define(['exports', 'underscore', 'handlebars', 'backbone'], factory) :
+	(factory((global.BackboneComponent = global.BackboneComponent || {}),global._,global.Handlebars,global.Backbone));
+}(this, (function (exports,underscore,handlebars,backbone) { 'use strict';
+
+var noop = function () {};
+
+function Binding(model, key, options) {
+  var this$1 = this;
+  if ( options === void 0 ) options = {};
+
+  var oneway = options.oneway; if ( oneway === void 0 ) oneway = false;
+
+  this.get = function () {
+    return key ? model.get(key) : model.attributes;
+  };
+  this.set = oneway ? noop : function (value) {
+    return key ? model.set(key, value) : model.set(value);
+  };
+
+  this.listenTo(model, key ? ("change:" + key) : 'change', function () {
+    this$1.trigger('change', this$1.get());
+  });
+}
+
+underscore.extend(Binding.prototype, backbone.Events, {_binding: true});
+
+function isBinding(binding) {
+  return !!(binding && binding._binding);
+}
+
+function getValue(binding) {
+  return isBinding(binding) ? binding.get() : binding;
+}
+
+function setValue(binding, value) {
+  return isBinding(binding) && binding.set(value);
+}
+
+function Computed(model, keys, fn) {
+  var this$1 = this;
+
+  var events;
+  if (underscore.isFunction(keys)) {
+    fn = keys;
+    events = 'change';
+  } else if (Array.isArray(keys)) {
+    events = keys.map(function (key) { return ("change:" + key); }).join(' ');  
+  } else {
+    events = 'change:' + keys;
+  }  
+
+  // TODO Caching
+  // Ran into issues when computed is updated, but bound in component initialize
+  // Needs deeper fix with bindings in component.update to alleviate
+  this.get = function () { return fn(); };
+
+  this.listenTo(model, events, function () {
+    this$1.trigger('change', this$1.get());
+  });
+}
+
+underscore.extend(Computed.prototype, backbone.Events, {_binding: true});
+
+function placeholder(id) {
+  return new handlebars.SafeString('<script data-placeholder="' + id + '"></script>');
+}
+
+function outlet() {
+  return new handlebars.SafeString('<script data-outlet></script>');
+}
+
+function render(view, subview, options) {
+  if (!options) {
+    subview = view;
+    view = this;
+  }
+
+  view._rendered[subview.cid] = subview;
+
+  return placeholder(subview.cid);
+}
+
+function eq(a, b) {
+  return a == b;
+}
+
+function not(value) {
+  return !value;
+}
+
+function get(model, key) {
+  if (key)
+    { return model.get(key); }
+  else
+    { return getValue(model); }
+}
+
+function array() {
+  // Remove options from arguments
+  var items = Array.prototype.slice.call(arguments, 0, -1);
+  return items;
+}
+
+function object(options) {
+  return options && options.hash || {};
+}
+
+function bound(model, key) {
+  if (!underscore.isString(key)) {
+    key = undefined;
+  }
+
+  return new Binding(model, key);
+}
+
+function oneway(model, key) {
+  return new Binding(model, key, {oneway: true});
+}
+
+function computed(binding, fn) {
+  if (!isBinding(binding))
+    { return fn(binding); }
+
+  return new Computed(binding, function () { return fn(binding.get()); });
+}
+
+function lowercase(str) {
+  if(str && typeof str === "string") {
+    return str.toLowerCase();
+  } else {
+    return '';
+  }
+}
+
+handlebars.registerHelper('lowercase', lowercase);
+handlebars.registerHelper('placeholder', placeholder);
+handlebars.registerHelper('outlet', outlet);
+handlebars.registerHelper('render', render);
+handlebars.registerHelper('eq', eq);
+handlebars.registerHelper('not', not);
+handlebars.registerHelper('get', get);
+handlebars.registerHelper('array', array);
+handlebars.registerHelper('object', object);
+handlebars.registerHelper('bound', bound);
+handlebars.registerHelper('oneway', oneway);
+handlebars.registerHelper('computed', computed);
+
+var View$1 = backbone.View.extend({
+  constructor: function View$$1() {
+    backbone.View.apply(this, arguments);
+
+    this._components = {};
+  },
+
+  render: function render() {
+    var this$1 = this;
+
+    // First, mark all components for removal and clean subview rendering slate
+    // (added components will remove this mark)
+    underscore.each(this._components, function (component) {
+      component._to_be_removed = true;
+    });
+    this._rendered = {};
+
+    var data = this.templateData ? this.templateData() : this;
+    var html = this.template(data);
+    this.$el.html(html);
+
+    // Render active components and remove inactive
+    underscore.each(this._components, function (component, id) {
+      if (component._to_be_removed) {
+        component.remove();
+        delete this$1._components[id];
+        return;
+      }
+
+      this$1.$('[data-placeholder="' + id + '"]').replaceWith(component.el);
+      component.render();
+    });
+
+    // Render active subviews
+    underscore.each(this._rendered, function (view, id) {
+      this$1.$('[data-placeholder="' + id + '"]').replaceWith(view.el);
+      view.render();
+    });
+
+    this.delegateEvents();
+
+    return this;
+  },
+
+  template: function template() { return ''; },
+
+  delegateEvents: function delegateEvents() {
+    backbone.View.prototype.delegateEvents.call(this);
+    underscore.each(this._components, function (component) {
+      component.delegateEvents();
+    });
+    underscore.each(this._rendered, function (view) {
+      view.delegateEvents();
+    });
+  },
+
+  remove: function remove() {
+    underscore.each(this._components, function (component) {
+      component.remove();
+    });
+  },
+});
+
+var Component = View$1.extend({
+  defaultProps: {},
+
+  constructor: function Component(props) {
+    this.update(props);
+    View$1.call(this, props);
+  },
+
+  render: function render() {
+    var this$1 = this;
+
+    View$1.prototype.render.apply(this, arguments);
+
+    // Render children to outlet (if specified)
+    if (this.props.children) {
+      this.$('[data-outlet]').replaceWith(this.props.children());
+    }
+
+    // If component has child components, they may have been in outlet,
+    underscore.each(this._components, function (component, id) {
+      if (component._to_be_removed) {
+        // (already removed by View render)
+        return;
+      }
+
+      this$1.$('[data-placeholder="' + id + '"]').replaceWith(component.el);
+      component.render();
+    });
+
+    // Render active subviews
+    underscore.each(this._rendered, function (view, id) {
+      this$1.$('[data-placeholder="' + id + '"]').replaceWith(view.el);
+      view.render();
+    });
+
+    return this;
+  },
+
+  update: function update(props) {
+    this.props = underscore.defaults(props, underscore.result(this, 'defaultProps'));
+  },
+
+  remove: function remove() {
+    // Stop listening to any bound props
+    underscore.each(this.props, function (prop) {
+      if (prop && prop.stopListening)
+        { prop.stopListening(); }
+    });
+
+    View$1.prototype.remove.call(this);
+  },
+}, {
+  registerAs: function(name) {
+    var Type = this;
+    handlebars.registerHelper(name, function(id, view, options) {
+      if (!view) {
+        options = id;
+        view = (options && options.data && options.data.parent_component) || this;
+        id = underscore.uniqueId(name);
+      }
+      if (!options) {
+        options = view;
+        view = (options && options.data && options.data.parent_component) || this;
+      }
+      options = options || {};
+
+      var context = this;
+      var props = underscore.extend({
+        children: children,
+      }, options.hash || {});
+      var data = (options.fn && options.data) ? handlebars.createFrame(options.data) : {};
+
+      var component = view._components[id];
+      if (!component)
+        { component = view._components[id] = new Type(props); }
+      else
+        { component.update(props); }
+
+      component._to_be_removed = false;
+      data.parent_component = component;
+
+      return handlebars.helpers.placeholder(id);
+
+      function children() {
+        var html = options.fn && options.fn(context, {data: data, blockParams: [component]});
+
+        if (isSafestring(html))
+          { return html.string; }
+
+        return html;
+      }
+    });
+  }
+});
+function isSafestring(value) {
+  if (!value || underscore.isString(value))
+    { return false; }
+
+  return 'string' in value;
+}
+
+var version = "0.1.0";
+
+exports.Binding = Binding;
+exports.isBinding = isBinding;
+exports.getValue = getValue;
+exports.setValue = setValue;
+exports.Computed = Computed;
+exports.View = View$1;
+exports.Component = Component;
+exports.VERSION = version;
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+})));
