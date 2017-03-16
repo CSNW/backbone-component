@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "backbone-component",
   "version": "0.1.0",
   "description": "Backbone + Handlebars components",
