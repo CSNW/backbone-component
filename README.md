@@ -23,7 +23,7 @@ Backbone + Handlebars component system.
 
 ## Usage
 
-### Define Component
+### Component + View
 
 ```js
 import {Component} from 'backbone-component';
@@ -105,12 +105,14 @@ export default View.extend({
 ### Computed
 
 ```js
-import {View, Component, Computed, isBinding} from 'backbone-component';
+import {Component, isBinding} from 'backbone-component';
+
+const template = Handlebars.compile(`{{get props.message}}`);
+//                                     ^ get helpers is used to get the underlying value
 
 const DisplayMessage = Component.extend({
-  template: Handlebars.compile(`{{get props.message}}`),
-  //                              ^ get helper is used to get the underlying value
-  
+  template,
+
   initialize() {
     //  v computed's are bindings + fn, so use binding approach
     if (isBinding(this.props.message)) {
@@ -122,7 +124,7 @@ DisplayMessage.registerAs('display-message');
 ```
 
 ```js
-import {View} from 'backbone-component';
+import {View, Computed} from 'backbone-component';
 
 const template = Handlebars.compile(`
   Quiet: {{display-message message=quiet}}
@@ -152,7 +154,7 @@ export default View.extend({
 import {Component} from 'backbone-component';
 
 const template = Handlebars.compile(`
-  <dt>{{title}}</dt>
+  <dt>{{props.title}}</dt>
   <dd>{{outlet}}</dd>
 `);
 
@@ -167,7 +169,7 @@ import {View} from 'backbone-component';
 
 const template = Handlebars.compile(`
   {{#details title="Information"}}
-    <p>Info...</p>
+    <p>In outlet...</p>
   {{/details}}
 `);
 
