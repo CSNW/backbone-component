@@ -177,3 +177,25 @@ export default View.extend({
   template
 });
 ```
+
+### Helpers
+
+Models, Bindings, and Computed:
+
+- `{{get model "key"}}` or `{{get binding}}` - Get underlying value for Backbone Model, Binding, or Computed
+- `{{bound model "key"}}` - Create a two-way binding to the given model and key
+- `{{oneway model "key"}}` - Create a one-way (get only) binding to the given model and key
+- `{{computed binding fn}}` or `{{computed value fn}}` - Map the given binding/value through the given function
+
+Components and Views:
+
+- `{{outlet}}` - Outlet for block components
+- `{{render view}}` - Render given view from template
+- `{{placeholder "id"}}` - (internal) Insert placeholder to be replaced in render
+
+Utilities:
+
+- `(eq a b)` - Check if two values are equal (using `==`) (e.q. `{{#if (eq a b)}}...{{/if}}`
+- `(not c)` - Get inverse of value (using `!`)
+- `(array 1 2 3)` - Create array from values
+- `(object a=1 b=2)` - Create array from key-values
