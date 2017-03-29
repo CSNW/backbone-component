@@ -33,7 +33,7 @@ function render(view, subview, options) {
 function get(model, key) {
   model = getValue(model);
 
-  if (!key || !model) {
+  if (!isString(key) || !model) {
     return model;
   }
 
