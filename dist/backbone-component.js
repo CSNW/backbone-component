@@ -86,29 +86,18 @@ function render(view, subview, options) {
   return placeholder(subview.cid);
 }
 
-function eq(a, b) {
-  return a == b;
-}
-
-function not(value) {
-  return !value;
-}
-
 function get(model, key) {
-  if (key)
-    { return model.get(key); }
-  else
-    { return getValue(model); }
-}
+  model = getValue(model);
 
-function array() {
-  // Remove options from arguments
-  var items = Array.prototype.slice.call(arguments, 0, -1);
-  return items;
-}
+  if (!key || !model) {
+    return model;
+  }
 
-function object(options) {
-  return options && options.hash || {};
+  if (model.get) {
+    return model.get(key);
+  } else {
+    return model[key];
+  }
 }
 
 function bound(model, key) {
@@ -130,26 +119,35 @@ function computed(binding, fn) {
   return new Computed(binding, function () { return fn(binding.get()); });
 }
 
-function lowercase(str) {
-  if(str && typeof str === "string") {
-    return str.toLowerCase();
-  } else {
-    return '';
-  }
+function eq(a, b) {
+  return a == b;
 }
 
-handlebars.registerHelper('lowercase', lowercase);
+function not(value) {
+  return !value;
+}
+
+function array() {
+  // Remove options from arguments
+  var items = Array.prototype.slice.call(arguments, 0, -1);
+  return items;
+}
+
+function object(options) {
+  return options && options.hash || {};
+}
+
 handlebars.registerHelper('placeholder', placeholder);
 handlebars.registerHelper('outlet', outlet);
 handlebars.registerHelper('render', render);
-handlebars.registerHelper('eq', eq);
-handlebars.registerHelper('not', not);
 handlebars.registerHelper('get', get);
-handlebars.registerHelper('array', array);
-handlebars.registerHelper('object', object);
 handlebars.registerHelper('bound', bound);
 handlebars.registerHelper('oneway', oneway);
 handlebars.registerHelper('computed', computed);
+handlebars.registerHelper('eq', eq);
+handlebars.registerHelper('not', not);
+handlebars.registerHelper('array', array);
+handlebars.registerHelper('object', object);
 
 var View$1 = backbone.View.extend({
   constructor: function View$$1() {

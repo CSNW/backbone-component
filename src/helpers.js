@@ -31,10 +31,17 @@ function render(view, subview, options) {
 }
 
 function get(model, key) {
-  if (key)
+  model = getValue(model);
+
+  if (!key || !model) {
+    return model;
+  }
+
+  if (model.get) {
     return model.get(key);
-  else
-    return getValue(model);
+  } else {
+    return model[key];
+  }
 }
 
 function bound(model, key) {
