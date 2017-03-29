@@ -1,6 +1,6 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.1.0 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.1.2 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('handlebars'), require('backbone')) :
@@ -89,7 +89,7 @@ function render(view, subview, options) {
 function get(model, key) {
   model = getValue(model);
 
-  if (!key || !model) {
+  if (!underscore.isString(key) || !model) {
     return model;
   }
 
@@ -313,7 +313,7 @@ function isSafestring(value) {
   return 'string' in value;
 }
 
-var version = "0.1.0";
+var version = "0.1.2";
 
 exports.Binding = Binding;
 exports.isBinding = isBinding;
