@@ -313,6 +313,41 @@ function isSafestring(value) {
   return 'string' in value;
 }
 
+var Region = Component.extend({
+  defaultProps: {
+    bindings: [],
+    className: '',
+    style: '',
+    inline: false,
+  },
+  template: function () { return '<script data-outlet></script>'; },
+
+  initialize: function initialize() {
+    var this$1 = this;
+
+    if (this.model) {
+      this.listenTo(this.model, 'change', this.render);
+    }
+    
+    this.props.bindings.forEach(function (binding) {
+      this$1.listenTo(binding, 'change', this$1.render);
+    });
+  },
+
+  render: function render() {
+    var style = this.props.style;
+    if (this.props.inline) {
+      style = 'display: inline-block;' + (style ? ' ' + style : '');
+    }
+
+    this.$el.attr('style', style);
+    this.$el.removeClass().addClass(this.props.className);
+
+    return Component.prototype.render.call(this);
+  },
+});
+Region.registerAs('region');
+
 var version = "0.1.2";
 
 exports.Binding = Binding;
