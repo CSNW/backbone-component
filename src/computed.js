@@ -7,23 +7,39 @@ import {
 } from 'backbone';
 
 export default function Computed(model, keys, fn) {
-  var events;
+  let events;
+  let has_cached = false;
+  let cached;
+
   if (isFunction(keys)) {
     fn = keys;
     events = 'change';
   } else if (Array.isArray(keys)) {
     events = keys.map(key => `change:${key}`).join(' ');  
   } else {
-    events = 'change:' + keys;
-  }  
+    events = keys.split(' ').map(key => `change:${key}`).join(' ');
+  }
 
-  // TODO Caching
-  // Ran into issues when computed is updated, but bound in component initialize
+  // TODO Ran into issues when computed is updated, but bound in component initialize
   // Needs deeper fix with bindings in component.update to alleviate
-  this.get = () => fn();
+  
+  this.get = () => {
+    if (!has_cached) {
+      cached = fn();
+
+      // Note: caching here is the goal,
+      // but had other issues due to updates outside of watched changes
+      // -> Only cache on recompute from model for now
+    }
+
+    return cached;
+  };
 
   this.listenTo(model, events, () => {
-    this.trigger('change', this.get());
+    cached = fn();
+    has_cached = true;
+
+    this.trigger('change', cached);
   });
 }
 
