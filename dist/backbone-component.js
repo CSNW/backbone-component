@@ -1,6 +1,6 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.3.0 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.3.1 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('handlebars'), require('backbone')) :
@@ -42,7 +42,7 @@ function setValue(binding, value) {
   return isBinding(binding) && binding.set(value);
 }
 
-function Computed(model, keys, fn) {
+function Computed(model, keys, fn, options) {
   var this$1 = this;
 
   var events;
@@ -50,6 +50,7 @@ function Computed(model, keys, fn) {
   var cached;
 
   if (underscore.isFunction(keys)) {
+    options = fn;
     fn = keys;
     events = 'change';
   } else if (Array.isArray(keys)) {
@@ -58,16 +59,16 @@ function Computed(model, keys, fn) {
     events = keys.split(' ').map(function (key) { return ("change:" + key); }).join(' ');
   }
 
+  // For now, cache is opt-in
+  var should_cache = options && options.cache;
+
   // TODO Ran into issues when computed is updated, but bound in component initialize
   // Needs deeper fix with bindings in component.update to alleviate
   
   this.get = function () {
-    if (!has_cached) {
+    if (!has_cached || !should_cache) {
       cached = fn();
-
-      // Note: caching here is the goal,
-      // but had other issues due to updates outside of watched changes
-      // -> Only cache on recompute from model for now
+      has_cached = true;
     }
 
     return cached;
@@ -364,7 +365,7 @@ var Region = Component.extend({
 });
 Region.registerAs('region');
 
-var version = "0.3.0";
+var version = "0.3.1";
 
 exports.Binding = Binding;
 exports.isBinding = isBinding;
