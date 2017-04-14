@@ -1,5 +1,6 @@
 import {
   isString,
+  isFunction,
 } from 'underscore';
 import {
   registerHelper,
@@ -19,10 +20,19 @@ function outlet() {
   return new SafeString('<script data-outlet></script>');
 }
 
-function render(view, subview, options) {
-  if (!options) {
+function render(view, subview, context, options) {
+  if (!context) {
+    options = subview;
+    context = this;
     subview = view;
     view = this;
+  } else if (!options) {
+    options = context;
+    context = this;
+  }
+
+  if (isFunction(subview)) {
+    return new SafeString(subview(context));
   }
 
   view._rendered[subview.cid] = subview;
