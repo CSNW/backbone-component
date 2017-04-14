@@ -1,6 +1,6 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.3.1 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.3.2 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('handlebars'), require('backbone')) :
@@ -92,10 +92,19 @@ function outlet() {
   return new handlebars.SafeString('<script data-outlet></script>');
 }
 
-function render(view, subview, options) {
-  if (!options) {
+function render(view, subview, context, options) {
+  if (!context) {
+    options = subview;
+    context = this;
     subview = view;
     view = this;
+  } else if (!options) {
+    options = context;
+    context = this;
+  }
+
+  if (underscore.isFunction(subview)) {
+    return new handlebars.SafeString(subview(context));
   }
 
   view._rendered[subview.cid] = subview;
@@ -365,7 +374,7 @@ var Region = Component.extend({
 });
 Region.registerAs('region');
 
-var version = "0.3.1";
+var version = "0.3.2";
 
 exports.Binding = Binding;
 exports.isBinding = isBinding;
