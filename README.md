@@ -8,7 +8,7 @@ Backbone + Handlebars component system.
     
     ```json
     "dependencies": {
-      "backbone-component": "git+https://github.com/CSNW/backbone-component.git#v0.1.0"
+      "backbone-component": "git+https://github.com/CSNW/backbone-component.git#v0.3.3"
     }
     ```
 

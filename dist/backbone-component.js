@@ -1,6 +1,6 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.3.2 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.3.3 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('handlebars'), require('backbone')) :
@@ -306,6 +306,7 @@ var Component = View$1.extend({
 
       var context = this;
       var props = underscore.extend({
+        id: id,
         children: children,
       }, options.hash || {});
       var data = (options.fn && options.data) ? handlebars.createFrame(options.data) : {};
@@ -374,7 +375,7 @@ var Region = Component.extend({
 });
 Region.registerAs('region');
 
-var version = "0.3.2";
+var version = "0.3.3";
 
 exports.Binding = Binding;
 exports.isBinding = isBinding;
