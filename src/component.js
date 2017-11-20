@@ -79,6 +79,7 @@ var Component = View.extend({
 
       var context = this;
       var props = extend({
+        id,
         children,
       }, options.hash || {});
       var data = (options.fn && options.data) ? createFrame(options.data) : {};
