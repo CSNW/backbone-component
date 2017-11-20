@@ -16,9 +16,9 @@ import View from './view';
 var Component = View.extend({
   defaultProps: {},
 
-  constructor: function Component(props) {
-    this.update(props);
-    View.call(this, props);
+  constructor: function Component(options = {}) {
+    this.update(options.props);
+    View.call(this, options);
   },
 
   render() {
@@ -86,7 +86,7 @@ var Component = View.extend({
 
       var component = view._components[id];
       if (!component)
-        component = view._components[id] = new Type(props);
+        component = view._components[id] = new Type({ props });
       else
         component.update(props);
 
