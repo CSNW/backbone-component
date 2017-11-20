@@ -1,6 +1,6 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.3.3 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.3.4 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('handlebars'), require('backbone')) :
@@ -241,9 +241,11 @@ var View$1 = backbone.View.extend({
 var Component = View$1.extend({
   defaultProps: {},
 
-  constructor: function Component(props) {
-    this.update(props);
-    View$1.call(this, props);
+  constructor: function Component(options) {
+    if ( options === void 0 ) options = {};
+
+    this.update(options.props);
+    View$1.call(this, options);
   },
 
   render: function render() {
@@ -313,7 +315,7 @@ var Component = View$1.extend({
 
       var component = view._components[id];
       if (!component)
-        { component = view._components[id] = new Type(props); }
+        { component = view._components[id] = new Type({ props: props }); }
       else
         { component.update(props); }
 
@@ -375,7 +377,7 @@ var Region = Component.extend({
 });
 Region.registerAs('region');
 
-var version = "0.3.3";
+var version = "0.3.4";
 
 exports.Binding = Binding;
 exports.isBinding = isBinding;
