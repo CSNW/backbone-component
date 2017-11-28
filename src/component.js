@@ -18,6 +18,12 @@ var Component = View.extend({
 
   constructor: function Component(options = {}) {
     this.update(options.props);
+
+    // Pass model and collection through directly to view
+    // (there are other properties that could be set directly, but they are less intuitive)
+    if (this.props.model && !options.model) options.model = this.props.model;
+    if (this.props.collection && !options.collection) options.collection = this.props.collection;
+
     View.call(this, options);
   },
 
