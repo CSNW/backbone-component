@@ -1,6 +1,6 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.3.4 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.3.5 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('handlebars'), require('backbone')) :
@@ -245,6 +245,12 @@ var Component = View$1.extend({
     if ( options === void 0 ) options = {};
 
     this.update(options.props);
+
+    // Pass model and collection through directly to view
+    // (there are other properties that could be set directly, but they are less intuitive)
+    if (this.props.model && !options.model) { options.model = this.props.model; }
+    if (this.props.collection && !options.collection) { options.collection = this.props.collection; }
+
     View$1.call(this, options);
   },
 
@@ -377,7 +383,7 @@ var Region = Component.extend({
 });
 Region.registerAs('region');
 
-var version = "0.3.4";
+var version = "0.3.5";
 
 exports.Binding = Binding;
 exports.isBinding = isBinding;
