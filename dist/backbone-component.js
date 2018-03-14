@@ -1,6 +1,6 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.3.5 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.3.6 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('handlebars'), require('backbone')) :
@@ -387,7 +387,7 @@ var Region = Component.extend({
 });
 Region.registerAs('region');
 
-var version = "0.3.5";
+var version = "0.3.6";
 
 exports.Binding = Binding;
 exports.isBinding = isBinding;
