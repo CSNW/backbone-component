@@ -350,10 +350,11 @@ function isSafestring(value) {
 
 var Region = Component.extend({
   defaultProps: {
+    binding: null,
     bindings: [],
     className: '',
     style: '',
-    inline: false,
+    inline: false
   },
   template: function () { return '<script data-outlet></script>'; },
 
@@ -363,7 +364,10 @@ var Region = Component.extend({
     if (this.model) {
       this.listenTo(this.model, 'change', this.render);
     }
-    
+    if (this.props.binding) {
+      this.listenTo(this.props.binding, 'change', this.render);
+    }
+
     this.props.bindings.forEach(function (binding) {
       this$1.listenTo(binding, 'change', this$1.render);
     });
@@ -379,7 +383,7 @@ var Region = Component.extend({
     this.$el.removeClass().addClass(this.props.className);
 
     return Component.prototype.render.call(this);
-  },
+  }
 });
 Region.registerAs('region');
 
