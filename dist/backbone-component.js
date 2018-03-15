@@ -1,6 +1,6 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.4.0-beta.1 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.4.0 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('backbone'), require('handlebars')) :
@@ -8,11 +8,54 @@
 	(factory((global.BackboneComponent = {}),global._,global.Backbone,global.Handlebars));
 }(this, (function (exports,underscore,backbone,handlebars) { 'use strict';
 
+function Observable(value) {
+  var this$1 = this;
+
+  this.get = function () { return value; };
+  this.set = function (_value) {
+    value = _value;
+    this$1.trigger('change', value);
+  };
+
+  this._binding = { type: 'observable', models: [] };
+}
+underscore.extend(Observable.prototype, backbone.Events);
+
+function isObservable(binding) {
+  return !!(binding && binding._binding);
+}
+
+function getValue(binding) {
+  return isObservable(binding) ? binding.get() : binding;
+}
+
+function setValue(binding, value) {
+  return isObservable(binding) && binding.set(value);
+}
+
 var noop = function () {};
+
+var cache = (function () {
+  if (typeof WeakMap === 'undefined') { return { get: noop, set: noop }; }
+
+  var cache = new WeakMap();
+  return {
+    get: function get(model, key) {
+      return cache.has(model) && cache.get(model)[key];
+    },
+    set: function set(model, key, value) {
+      if (!cache.has(model)) { cache.set(model, {}); }
+      cache.get(model)[key] = value;
+    }
+  };
+})();
 
 function Binding(model, key, options) {
   var this$1 = this;
   if ( options === void 0 ) options = {};
+
+  var cached = cache.get(model, key);
+  if (cached) { return cached; }
 
   var oneway = options.oneway; if ( oneway === void 0 ) oneway = false;
 
@@ -28,21 +71,10 @@ function Binding(model, key, options) {
   });
 
   this._binding = { type: oneway ? 'oneway' : 'binding', model: model, key: key };
+  cache.set(model, key, this);
 }
 
 underscore.extend(Binding.prototype, backbone.Events);
-
-function isBinding(binding) {
-  return !!(binding && binding._binding);
-}
-
-function getValue(binding) {
-  return isBinding(binding) ? binding.get() : binding;
-}
-
-function setValue(binding, value) {
-  return isBinding(binding) && binding.set(value);
-}
 
 function bound(model, key) {
   return new Binding(model, key);
@@ -54,40 +86,50 @@ function oneway(model, key) {
 
 var noop$1 = function () {};
 
-function Computed(model, keys, fn) {
+function Computed(model, key, fn) {
   var this$1 = this;
 
   var args;
-  if (!fn) {
-    fn = keys;
-    args = !model ? [] : (!Array.isArray(model) ? [model] : model);
+  if (underscore.isString(key)) {
+    args = [bound(model, key)];
   } else {
-    if (!Array.isArray(keys)) { keys = []; }
-    args = keys.map(function (key) { return bound(model, key); });
+    fn = key;
+    args = !model ? [] : !Array.isArray(model) ? [model] : model;
   }
 
   var values = args.map(getValue);
-  var result = fn(values);
+  var get, set, result;
+  if (underscore.isFunction(fn)) {
+    get = function () { return fn.apply(null, values); };
+    set = noop$1;
+  } else {
+    get = function () { return fn.get.apply(null, values); };
+    set = function (value) { return (result = fn.set(value)); };
+  }
 
+  result = get();
   this.get = function () { return result; };
-  this.set = noop$1;
+  this.set = set;
 
   var models = [];
   var bindings = [];
 
   args.forEach(function (binding, index) {
-    if (!isBinding(binding)) { return; }    
+    if (!isObservable(binding)) { return; }
 
-    if (binding._binding.model) {
-      models.push(binding._binding.model);
-    } else if (binding._binding.models) {
-      models = models.concat(binding._binding.models);
+    var ref = binding._binding;
+    var model = ref.model;
+    var _models = ref.models;
+    if (model) {
+      models.push(model);
+    } else if (_models) {
+      models = models.concat(_models);
     }
     bindings.push(binding);
 
     this$1.listenTo(binding, 'change', function () {
       values[index] = getValue(binding);
-      result = fn(values);
+      result = get();
 
       this$1.trigger('change', result);
     });
@@ -98,8 +140,8 @@ function Computed(model, keys, fn) {
 
 underscore.extend(Computed.prototype, backbone.Events);
 
-function computed(model, keys, fn) {
-  return new Computed(model, keys, fn);
+function computed(model, key, fn) {
+  return new Computed(model, key, fn);
 }
 
 function placeholder(id) {
@@ -153,12 +195,11 @@ function bound$1(model, key) {
 }
 
 function oneway$1(model, key) {
-  return new Binding(model, key, {oneway: true});
+  return new Binding(model, key, { oneway: true });
 }
 
 function computed$1(binding, fn) {
-  if (!isBinding(binding))
-    { return fn(binding); }
+  if (!isObservable(binding)) { return fn(binding); }
 
   return new Computed(binding, fn);
 }
@@ -178,7 +219,7 @@ function array() {
 }
 
 function object(options) {
-  return options && options.hash || {};
+  return (options && options.hash) || {};
 }
 
 handlebars.registerHelper('placeholder', placeholder);
@@ -200,16 +241,16 @@ var BoundModel = backbone.Model.extend({
     if ( values === void 0 ) values = {};
 
     var toConnect = {};
-    underscore.each(values, function (key, value) {
-      if (!isBinding(value)) { return; }
+    underscore.each(values, function (value, key) {
+      if (!isObservable(value)) { return; }
 
       toConnect[key] = value;
       values[key] = getValue(value);
     });
 
-    backbone.Model.call(this, values, options);
-
     this._bindings = {};
+
+    backbone.Model.call(this, values, options);
     this.connect(toConnect);
   },
 
@@ -243,7 +284,7 @@ var BoundModel = backbone.Model.extend({
     var this$1 = this;
 
     var addBinding = function (key, binding) {
-      if (!isBinding(binding)) {
+      if (!isObservable(binding)) {
         backbone.Model.prototype.set.call(this$1, key, binding, { silent: true });
         return;
       }
@@ -259,7 +300,9 @@ var BoundModel = backbone.Model.extend({
       var ref = binding._binding;
       var model = ref.model;
       var models = ref.models;
-      var internal = model === this$1 || every(models, function (model) { return model === this$1; });
+      var internal = model
+        ? model === this$1
+        : underscore.every(models, function (model) { return model === this$1; });
       this$1._bindings[key] = { binding: binding, internal: internal };
 
       this$1.listenTo(binding, 'change', function () {
@@ -477,11 +520,9 @@ var Region = Component.extend({
     if (this.model) {
       this.listenTo(this.model, 'change', this.render);
     }
-    if (this.props.binding) {
-      this.listenTo(this.props.binding, 'change', this.render);
-    }
 
-    this.props.bindings.forEach(function (binding) {
+    this.listenTo(this.props, 'change:binding', this.render);
+    this.props.get('bindings').forEach(function (binding) {
       this$1.listenTo(binding, 'change', this$1.render);
     });
   },
@@ -493,7 +534,7 @@ var Region = Component.extend({
     }
 
     this.$el.attr('style', style);
-    this.$el.removeClass().addClass(this.props.className || this.props.class);
+    this.$el.removeClass().addClass(this.props.get('class'));
 
     Component.prototype.render.call(this);
     return this;
@@ -502,31 +543,40 @@ var Region = Component.extend({
 
 Region.registerAs('region');
 
-function Observable(value) {
+var noop$2 = function () {};
+
+function Listener(model, keys) {
   var this$1 = this;
 
-  this.get = function () { return value; };
-  this.set = function (_value) {
-    value = _value;
-    this$1.trigger('change', value);
-  };
+  if (keys && !Array.isArray(keys)) { keys = [keys]; }
+  var events = !keys ? 'change' : keys.map(function (key) { return ("change:" + key); }).join(' ');
 
-  this._binding = { type: 'observable', models: [] };
+  this.get = noop$2;
+  this.set = noop$2;
+  this.listenTo(model, events, function () { return this$1.trigger('change'); });
+
+  this._binding = { type: 'listener', model: model, keys: keys };
 }
 
-underscore.extend(Observable.prototype, backbone.Events);
+underscore.extend(Listener.prototype, backbone.Events);
 
-var version = "0.4.0-beta.1";
+function listener(model, keys) {
+  return new Listener(model, keys);
+}
+
+var version = "0.4.0";
 
 exports.Observable = Observable;
+exports.isObservable = isObservable;
+exports.getValue = getValue;
+exports.setValue = setValue;
 exports.Binding = Binding;
 exports.bound = bound;
 exports.oneway = oneway;
-exports.isBinding = isBinding;
-exports.getValue = getValue;
-exports.setValue = setValue;
 exports.Computed = Computed;
 exports.computed = computed;
+exports.Listener = Listener;
+exports.listener = listener;
 exports.BoundModel = BoundModel;
 exports.View = View;
 exports.Component = Component;
