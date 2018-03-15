@@ -4,11 +4,7 @@ import BoundModel from './bound-model';
 
 var View = BackboneView.extend({
   constructor: function View(options) {
-    // Create props and state before initialize is called
-    this.props =
-      options.props && isFunction(options.props.set)
-        ? options.props
-        : new BoundModel(options.props || {});
+    // Create state before initialize is called
     this.state = new BoundModel();
 
     BackboneView.call(this, options);
