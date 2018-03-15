@@ -54,11 +54,17 @@ function oneway(model, key) {
 
 var noop$1 = function () {};
 
-function Computed(args, fn) {
+function Computed(model, keys, fn) {
   var this$1 = this;
 
-  if (!args) { args = []; }
-  if (!Array.isArray(args)) { args = [args]; }
+  var args;
+  if (!fn) {
+    fn = keys;
+    args = !model ? [] : (!Array.isArray(model) ? [model] : model);
+  } else {
+    if (!Array.isArray(keys)) { keys = []; }
+    args = keys.map(function (key) { return bound(model, key); });
+  }
 
   var values = args.map(getValue);
   var result = fn(values);
@@ -92,8 +98,8 @@ function Computed(args, fn) {
 
 underscore.extend(Computed.prototype, backbone.Events);
 
-function computed(bindings, fn) {
-  return new Computed(bindings, fn);
+function computed(model, keys, fn) {
+  return new Computed(model, keys, fn);
 }
 
 function placeholder(id) {
@@ -230,7 +236,7 @@ var BoundModel = backbone.Model.extend({
       underscore.each(key, function (value, key) { return setBinding(key, value); });
     }
 
-    return backbone.Model.prototype.set.call(this, values, options);
+    return backbone.Model.prototype.set.call(this, key, value, options);
   },
 
   connect: function connect(key, binding) {

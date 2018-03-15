@@ -1,12 +1,18 @@
 import { extend, unique } from 'underscore';
 import { Events } from 'backbone';
-import { isBinding, getValue } from './binding';
+import { bound, isBinding, getValue } from './binding';
 
 const noop = () => {};
 
-export default function Computed(args, fn) {
-  if (!args) args = [];
-  if (!Array.isArray(args)) args = [args];
+export default function Computed(model, keys, fn) {
+  let args;
+  if (!fn) {
+    fn = keys;
+    args = !model ? [] : (!Array.isArray(model) ? [model] : model);
+  } else {
+    if (!Array.isArray(keys)) keys = [];
+    args = keys.map(key => bound(model, key));
+  }
 
   const values = args.map(getValue);
   let result = fn(values);
@@ -40,6 +46,6 @@ export default function Computed(args, fn) {
 
 extend(Computed.prototype, Events);
 
-export function computed(bindings, fn) {
-  return new Computed(bindings, fn);
+export function computed(model, keys, fn) {
+  return new Computed(model, keys, fn);
 }

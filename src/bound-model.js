@@ -39,7 +39,7 @@ export default Model.extend({
       each(key, (value, key) => setBinding(key, value));
     }
 
-    return Model.prototype.set.call(this, values, options);
+    return Model.prototype.set.call(this, key, value, options);
   },
 
   connect(key, binding) {
