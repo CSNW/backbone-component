@@ -1,4 +1,4 @@
-import { extend, unique } from 'underscore';
+import { extend, unique, isFunction } from 'underscore';
 import { Events } from 'backbone';
 import { bound, isBinding, getValue } from './binding';
 
@@ -15,10 +15,18 @@ export default function Computed(model, keys, fn) {
   }
 
   const values = args.map(getValue);
-  let result = fn(values);
+  let get, set;
+  if (isFunction(fn)) {
+    get = () => fn.apply(null, values);
+    set = noop;
+  } else {
+    get = () => fn.get.apply(null, values);
+    set = value => fn.set(value);
+  }
 
+  let result = get();
   this.get = () => result;
-  this.set = noop;
+  this.set = set;
 
   let models = [];
   const bindings = [];
@@ -26,16 +34,17 @@ export default function Computed(model, keys, fn) {
   args.forEach((binding, index) => {
     if (!isBinding(binding)) return;    
 
-    if (binding._binding.model) {
-      models.push(binding._binding.model);
-    } else if (binding._binding.models) {
-      models = models.concat(binding._binding.models);
+    const { model, models: _models } = binding._binding;
+    if (model) {
+      models.push(model);
+    } else if (_models) {
+      models = models.concat(_models);
     }
     bindings.push(binding);
 
     this.listenTo(binding, 'change', () => {
       values[index] = getValue(binding);
-      result = fn(values);
+      result = get();
 
       this.trigger('change', result);
     });
