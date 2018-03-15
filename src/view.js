@@ -1,9 +1,17 @@
-import {View as BackboneView} from 'backbone';
-import {each} from 'underscore';
+import { View as BackboneView } from 'backbone';
+import { extend, each, isFunction } from 'underscore';
+import BoundModel from './bound-model';
 
 var View = BackboneView.extend({
-  constructor: function View() {
-    BackboneView.apply(this, arguments);
+  constructor: function View(options) {
+    // Create props and state before initialize is called
+    this.props =
+      options.props && isFunction(options.props.set)
+        ? options.props
+        : new BoundModel(options.props || {});
+    this.state = new BoundModel();
+
+    BackboneView.call(this, options);
 
     this._components = {};
   },
@@ -16,7 +24,7 @@ var View = BackboneView.extend({
     });
     this._rendered = {};
 
-    const data = this.templateData ? this.templateData() : this;
+    const data = this.templateData();
     const html = this.template(data);
     this.$el.html(html);
 
@@ -43,7 +51,12 @@ var View = BackboneView.extend({
     return this;
   },
 
-  template() { return ''; },
+  templateData() {
+    return this;
+  },
+  template() {
+    return '';
+  },
 
   delegateEvents() {
     BackboneView.prototype.delegateEvents.call(this);
@@ -59,6 +72,6 @@ var View = BackboneView.extend({
     each(this._components, component => {
       component.remove();
     });
-  },
+  }
 });
 export default View;

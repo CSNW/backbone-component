@@ -4,7 +4,7 @@ const Region = Component.extend({
   defaultProps: {
     binding: null,
     bindings: [],
-    className: '',
+    class: '',
     style: '',
     inline: false
   },
@@ -26,13 +26,14 @@ const Region = Component.extend({
   render() {
     let style = this.props.style;
     if (this.props.inline) {
-      style = 'display: inline-block;' + (style ? ' ' + style : '');
+      style = `display: inline-block;${style ? ` ${style}` : ''}`;
     }
 
     this.$el.attr('style', style);
-    this.$el.removeClass().addClass(this.props.className);
+    this.$el.removeClass().addClass(this.props.className || this.props.class);
 
-    return Component.prototype.render.call(this);
+    Component.prototype.render.call(this);
+    return this;
   }
 });
 export default Region;

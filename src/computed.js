@@ -1,47 +1,45 @@
-import {
-  extend,
-  isFunction,
-} from 'underscore';
-import {
-  Events,
-} from 'backbone';
+import { extend, unique } from 'underscore';
+import { Events } from 'backbone';
+import { isBinding, getValue } from './binding';
 
-export default function Computed(model, keys, fn, options) {
-  let events;
-  let has_cached = false;
-  let cached;
+const noop = () => {};
 
-  if (isFunction(keys)) {
-    options = fn;
-    fn = keys;
-    events = 'change';
-  } else if (Array.isArray(keys)) {
-    events = keys.map(key => `change:${key}`).join(' ');  
-  } else {
-    events = keys.split(' ').map(key => `change:${key}`).join(' ');
-  }
+export default function Computed(args, fn) {
+  if (!args) args = [];
+  if (!Array.isArray(args)) args = [args];
 
-  // For now, cache is opt-in
-  const should_cache = options && options.cache;
+  const values = args.map(getValue);
+  let result = fn(values);
 
-  // TODO Ran into issues when computed is updated, but bound in component initialize
-  // Needs deeper fix with bindings in component.update to alleviate
-  
-  this.get = () => {
-    if (!has_cached || !should_cache) {
-      cached = fn();
-      has_cached = true;
+  this.get = () => result;
+  this.set = noop;
+
+  const models = [];
+  const bindings = [];
+
+  args.forEach((binding, index) => {
+    if (!isBinding(binding)) return;    
+
+    if (binding._binding.model) {
+      models.push(binding._binding.model);
+    } else if (binding._binding.models) {
+      models = models.concat(binding._binding.models);
     }
+    bindings.push(binding);
 
-    return cached;
-  };
+    this.listenTo(binding, 'change', () => {
+      values[index] = getValue(binding);
+      result = fn(values);
 
-  this.listenTo(model, events, () => {
-    cached = fn();
-    has_cached = true;
-
-    this.trigger('change', cached);
+      this.trigger('change', result);
+    });
   });
+
+  this._binding = { type: 'computed', models: unique(models), bindings };
 }
 
-extend(Computed.prototype, Events, {_binding: true});
+extend(Computed.prototype, Events);
+
+export function computed(bindings, fn) {
+  return new Computed(bindings, fn);
+}

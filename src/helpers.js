@@ -70,7 +70,7 @@ function computed(binding, fn) {
   if (!isBinding(binding))
     return fn(binding);
 
-  return new Computed(binding, () => fn(binding.get()));
+  return new Computed(binding, fn);
 }
 
 function eq(a, b) {

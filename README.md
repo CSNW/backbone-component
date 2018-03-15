@@ -28,7 +28,8 @@ Backbone + Handlebars component system.
 ```js
 import {Component} from 'backbone-component';
 
-const template = Handlebars.compile(`Hello {{props.name}}`); 
+const template = Handlebars.compile(`Hello {{get props "name"}}`);
+//                                           ^ get helpers is used to get value from model
 
 const SayHiComponent = Component.extend({
   template,
@@ -57,7 +58,7 @@ export default View.extend({
 ### Bindings
 
 ```js
-import {Component, isBinding, getValue, setValue} from 'backbone-component';
+import { Component } from 'backbone-component';
 
 const InputComponent = Component.extend({
   tagName: 'input',
@@ -70,34 +71,32 @@ const InputComponent = Component.extend({
   },
 
   initialize() {
-    if (isBinding(this.props.value)) {
-      this.listenTo(this.props.value, 'change', this.render);
-    }
+    // Binding is stored internally in props model,
+    // so component treats this.props like standard Backbone Model
+    this.listenTo(this.props, 'change:value', this.render);
   },
 
   render() {
-    this.el.value = getValue(this.props.value);
+    this.el.value = this.props.get('value');
   },
 
   handleChange(e) {
-    setValue(this.props.value, e.target.value);
+    this.props.set({ value: e.target.value });
   }
 });
 InputComponent.registerAs('input');
 ```
 
 ```js
-import {View} from 'backbone-component';
+import { View } from 'backbone-component';
 
-const template = Handlebars.compile(`Name: {{input value=(bound model "name")}}`);
+const template = Handlebars.compile(`Name: {{input value=(bound state "name")}}`);
 
 export default View.extend({
   template,
 
   initialize() {
-    this.model = new Backbone.Model({
-      name: 'Tim'
-    });
+    this.state.set({ name: 'Tim' });
   }
 });
 ```
@@ -105,30 +104,27 @@ export default View.extend({
 ### Computed
 
 ```js
-import {Component, isBinding} from 'backbone-component';
+import { Component } from 'backbone-component';
 
-const template = Handlebars.compile(`{{get props.message}}`);
-//                                     ^ get helpers is used to get the underlying value
+const template = Handlebars.compile(`{{get props "message"}}`);
 
 const DisplayMessage = Component.extend({
   template,
 
   initialize() {
-    //  v computed's are bindings + fn, so use binding approach
-    if (isBinding(this.props.message)) {
-      this.listenTo(this.props.message, 'change', this.render);
-    }
+    // computed is binding + fn, so use binding approach
+    this.listenTo(this.props, 'change:message', this.render);
   }
 });
 DisplayMessage.registerAs('display-message');
 ```
 
 ```js
-import {View, Computed} from 'backbone-component';
+import { View, computed } from 'backbone-component';
 
 const template = Handlebars.compile(`
   Quiet: {{display-message message=quiet}}
-  Yelling: {{display-message message=(computed (bound model "message") toUpperCase)}}
+  Yelling: {{display-message message=(computed (bound state "message") toUpperCase)}}
   {{!                                 ^ computed can be used inline in combination with bound}}
 `);
 
@@ -136,11 +132,10 @@ export default View.extend({
   template,
 
   initialize() {
-    this.model = new Backbone.Model({
-      message: 'Hello World'
-    });
+    this.state.set({ message: 'Hello World' });
 
-    this.quiet = new Computed(this.model, 'message', this.toLowerCase);
+    // Create computed value
+    this.quiet = computed(this.state, 'message', this.toLowerCase);
   },
 
   toLowerCase: message => message.toLowerCase(),
@@ -151,10 +146,10 @@ export default View.extend({
 ### Outlet
 
 ```js
-import {Component} from 'backbone-component';
+import { Component } from 'backbone-component';
 
 const template = Handlebars.compile(`
-  <dt>{{props.title}}</dt>
+  <dt>{{get props "title"}}</dt>
   <dd>{{outlet}}</dd>
 `);
 
@@ -165,7 +160,7 @@ DetailsComponent.registerAs('details');
 ```
 
 ```js
-import {View} from 'backbone-component';
+import { View } from 'backbone-component';
 
 const template = Handlebars.compile(`
   {{#details title="Information"}}
