@@ -7,17 +7,21 @@ const banner = `/*!
  */`
 
 module.exports = {
-  entry: 'src/index.js',
-  dest: 'dist/backbone-component.js',
-  format: 'umd',
-  moduleName: 'BackboneComponent',
+  input: 'src/index.js',
   external: ['handlebars', 'underscore', 'backbone'],
-  globals: {
-    handlebars: 'Handlebars',
-    underscore: '_',
-    backbone: 'Backbone'
+
+  output: {
+    file: 'dist/backbone-component.js',
+    format: 'umd',
+    name: 'BackboneComponent',
+    globals: {
+      handlebars: 'Handlebars',
+      underscore: '_',
+      backbone: 'Backbone'
+    },
+    banner
   },
-  banner,
+  
   plugins: [
     json(),
     buble()

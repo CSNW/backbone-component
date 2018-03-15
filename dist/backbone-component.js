@@ -3,10 +3,10 @@
  * v0.4.0-beta.1 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('handlebars'), require('backbone')) :
-	typeof define === 'function' && define.amd ? define(['exports', 'underscore', 'handlebars', 'backbone'], factory) :
-	(factory((global.BackboneComponent = global.BackboneComponent || {}),global._,global.Handlebars,global.Backbone));
-}(this, (function (exports,underscore,handlebars,backbone) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('backbone'), require('handlebars')) :
+	typeof define === 'function' && define.amd ? define(['exports', 'underscore', 'backbone', 'handlebars'], factory) :
+	(factory((global.BackboneComponent = {}),global._,global.Backbone,global.Handlebars));
+}(this, (function (exports,underscore,backbone,handlebars) { 'use strict';
 
 var noop = function () {};
 
@@ -44,11 +44,11 @@ function setValue(binding, value) {
   return isBinding(binding) && binding.set(value);
 }
 
-function bound$1(model, key) {
+function bound(model, key) {
   return new Binding(model, key);
 }
 
-function oneway$1(model, key) {
+function oneway(model, key) {
   return new Binding(model, key, { oneway: true });
 }
 
@@ -61,9 +61,9 @@ function Computed(args, fn) {
   if (!Array.isArray(args)) { args = [args]; }
 
   var values = args.map(getValue);
-  var result$$1 = fn(values);
+  var result = fn(values);
 
-  this.get = function () { return result$$1; };
+  this.get = function () { return result; };
   this.set = noop$1;
 
   var models = [];
@@ -81,9 +81,9 @@ function Computed(args, fn) {
 
     this$1.listenTo(binding, 'change', function () {
       values[index] = getValue(binding);
-      result$$1 = fn(values);
+      result = fn(values);
 
-      this$1.trigger('change', result$$1);
+      this$1.trigger('change', result);
     });
   });
 
@@ -92,7 +92,7 @@ function Computed(args, fn) {
 
 underscore.extend(Computed.prototype, backbone.Events);
 
-function computed$1(bindings, fn) {
+function computed(bindings, fn) {
   return new Computed(bindings, fn);
 }
 
@@ -138,7 +138,7 @@ function get(model, key) {
   }
 }
 
-function bound$$1(model, key) {
+function bound$1(model, key) {
   if (!underscore.isString(key)) {
     key = undefined;
   }
@@ -146,11 +146,11 @@ function bound$$1(model, key) {
   return new Binding(model, key);
 }
 
-function oneway$$1(model, key) {
+function oneway$1(model, key) {
   return new Binding(model, key, {oneway: true});
 }
 
-function computed$$1(binding, fn) {
+function computed$1(binding, fn) {
   if (!isBinding(binding))
     { return fn(binding); }
 
@@ -179,9 +179,9 @@ handlebars.registerHelper('placeholder', placeholder);
 handlebars.registerHelper('outlet', outlet);
 handlebars.registerHelper('render', render);
 handlebars.registerHelper('get', get);
-handlebars.registerHelper('bound', bound$$1);
-handlebars.registerHelper('oneway', oneway$$1);
-handlebars.registerHelper('computed', computed$$1);
+handlebars.registerHelper('bound', bound$1);
+handlebars.registerHelper('oneway', oneway$1);
+handlebars.registerHelper('computed', computed$1);
 handlebars.registerHelper('eq', eq);
 handlebars.registerHelper('not', not);
 handlebars.registerHelper('array', array);
@@ -271,8 +271,8 @@ var BoundModel = backbone.Model.extend({
   }
 });
 
-var View$1 = backbone.View.extend({
-  constructor: function View$$1(options) {
+var View = backbone.View.extend({
+  constructor: function View(options) {
     // Create props and state before initialize is called
     this.props =
       options.props && underscore.isFunction(options.props.set)
@@ -346,7 +346,7 @@ var View$1 = backbone.View.extend({
   }
 });
 
-var Component = View$1.extend(
+var Component = View.extend(
   {
     defaultProps: {},
 
@@ -365,13 +365,13 @@ var Component = View$1.extend(
       if (options.props.collection && !options.collection)
         { options.collection = options.props.collection; }
 
-      View$1.call(this, options);
+      View.call(this, options);
     },
 
     render: function render() {
       var this$1 = this;
 
-      View$1.prototype.render.apply(this, arguments);
+      View.prototype.render.apply(this, arguments);
 
       // Render children to outlet (if specified)
       var children = this.props.get('children');
@@ -452,6 +452,7 @@ var Component = View$1.extend(
     }
   }
 );
+
 function isSafestring(value) {
   if (!value || underscore.isString(value)) { return false; }
 
@@ -496,20 +497,21 @@ var Region = Component.extend({
     return this;
   }
 });
+
 Region.registerAs('region');
 
 var version = "0.4.0-beta.1";
 
 exports.Binding = Binding;
-exports.bound = bound$1;
-exports.oneway = oneway$1;
+exports.bound = bound;
+exports.oneway = oneway;
 exports.isBinding = isBinding;
 exports.getValue = getValue;
 exports.setValue = setValue;
 exports.Computed = Computed;
-exports.computed = computed$1;
+exports.computed = computed;
 exports.BoundModel = BoundModel;
-exports.View = View$1;
+exports.View = View;
 exports.Component = Component;
 exports.VERSION = version;
 
