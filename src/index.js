@@ -1,16 +1,15 @@
 import './helpers';
 import './region';
 
-export { default as Observable } from './observable';
 export {
-  default as Binding,
-  bound,
-  oneway,
-  isBinding,
+  default as Observable,
+  isObservable,
   getValue,
   setValue
-} from './binding';
+} from './observable';
+export { default as Binding, bound, oneway } from './binding';
 export { default as Computed, computed } from './computed';
+export { default as Listener, listener } from './listener';
 export { default as BoundModel } from './bound-model';
 export { default as View } from './view';
 export { default as Component } from './component';

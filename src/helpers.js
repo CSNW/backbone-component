@@ -1,15 +1,7 @@
-import {
-  isString,
-  isFunction,
-} from 'underscore';
-import {
-  registerHelper,
-  SafeString,
-} from 'handlebars';
-import Binding, {
-  isBinding,
-  getValue,
-} from './binding';
+import { isString, isFunction } from 'underscore';
+import { registerHelper, SafeString } from 'handlebars';
+import { isObservable, getValue } from './observable';
+import Binding from './binding';
 import Computed from './computed';
 
 function placeholder(id) {
@@ -63,12 +55,11 @@ function bound(model, key) {
 }
 
 function oneway(model, key) {
-  return new Binding(model, key, {oneway: true});
+  return new Binding(model, key, { oneway: true });
 }
 
 function computed(binding, fn) {
-  if (!isBinding(binding))
-    return fn(binding);
+  if (!isObservable(binding)) return fn(binding);
 
   return new Computed(binding, fn);
 }
@@ -88,7 +79,7 @@ function array() {
 }
 
 function object(options) {
-  return options && options.hash || {};
+  return (options && options.hash) || {};
 }
 
 registerHelper('placeholder', placeholder);

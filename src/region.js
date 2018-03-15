@@ -14,11 +14,9 @@ const Region = Component.extend({
     if (this.model) {
       this.listenTo(this.model, 'change', this.render);
     }
-    if (this.props.binding) {
-      this.listenTo(this.props.binding, 'change', this.render);
-    }
 
-    this.props.bindings.forEach(binding => {
+    this.listenTo(this.props, 'change:binding', this.render);
+    this.props.get('bindings').forEach(binding => {
       this.listenTo(binding, 'change', this.render);
     });
   },
@@ -30,7 +28,7 @@ const Region = Component.extend({
     }
 
     this.$el.attr('style', style);
-    this.$el.removeClass().addClass(this.props.className || this.props.class);
+    this.$el.removeClass().addClass(this.props.get('class'));
 
     Component.prototype.render.call(this);
     return this;

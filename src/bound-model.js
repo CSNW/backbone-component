@@ -1,22 +1,22 @@
-import { isString, each } from 'underscore';
+import { isString, each, every } from 'underscore';
 import { Model } from 'backbone';
-import { isBinding, getValue } from './binding';
+import { isObservable, getValue } from './observable';
 
 // TODO This could use intelligent grouping to group listening and setting by underlying model
 
 export default Model.extend({
   constructor: function BoundModel(values = {}, options) {
     const toConnect = {};
-    each(values, (key, value) => {
-      if (!isBinding(value)) return;
+    each(values, (value, key) => {
+      if (!isObservable(value)) return;
 
       toConnect[key] = value;
       values[key] = getValue(value);
     });
 
-    Model.call(this, values, options);
-
     this._bindings = {};
+
+    Model.call(this, values, options);
     this.connect(toConnect);
   },
 
@@ -44,7 +44,7 @@ export default Model.extend({
 
   connect(key, binding) {
     const addBinding = (key, binding) => {
-      if (!isBinding(binding)) {
+      if (!isObservable(binding)) {
         Model.prototype.set.call(this, key, binding, { silent: true });
         return;
       }
@@ -58,7 +58,9 @@ export default Model.extend({
       }
 
       const { model, models } = binding._binding;
-      const internal = model === this || every(models, model => model === this);
+      const internal = model
+        ? model === this
+        : every(models, model => model === this);
       this._bindings[key] = { binding, internal };
 
       this.listenTo(binding, 'change', () => {

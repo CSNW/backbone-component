@@ -1,30 +1,30 @@
-import { extend, unique, isFunction } from 'underscore';
+import { extend, unique, isFunction, isString } from 'underscore';
 import { Events } from 'backbone';
-import { bound, isBinding, getValue } from './binding';
+import { isObservable, getValue } from './observable';
+import { bound } from './binding';
 
 const noop = () => {};
 
-export default function Computed(model, keys, fn) {
+export default function Computed(model, key, fn) {
   let args;
-  if (!fn) {
-    fn = keys;
-    args = !model ? [] : (!Array.isArray(model) ? [model] : model);
+  if (isString(key)) {
+    args = [bound(model, key)];
   } else {
-    if (!Array.isArray(keys)) keys = [];
-    args = keys.map(key => bound(model, key));
+    fn = key;
+    args = !model ? [] : !Array.isArray(model) ? [model] : model;
   }
 
   const values = args.map(getValue);
-  let get, set;
+  let get, set, result;
   if (isFunction(fn)) {
     get = () => fn.apply(null, values);
     set = noop;
   } else {
     get = () => fn.get.apply(null, values);
-    set = value => fn.set(value);
+    set = value => (result = fn.set(value));
   }
 
-  let result = get();
+  result = get();
   this.get = () => result;
   this.set = set;
 
@@ -32,7 +32,7 @@ export default function Computed(model, keys, fn) {
   const bindings = [];
 
   args.forEach((binding, index) => {
-    if (!isBinding(binding)) return;    
+    if (!isObservable(binding)) return;
 
     const { model, models: _models } = binding._binding;
     if (model) {
@@ -55,6 +55,6 @@ export default function Computed(model, keys, fn) {
 
 extend(Computed.prototype, Events);
 
-export function computed(model, keys, fn) {
-  return new Computed(model, keys, fn);
+export function computed(model, key, fn) {
+  return new Computed(model, key, fn);
 }
