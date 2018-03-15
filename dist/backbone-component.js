@@ -1,6 +1,6 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.3.6 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.4.0-beta.1 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('handlebars'), require('backbone')) :
@@ -16,19 +16,21 @@ function Binding(model, key, options) {
 
   var oneway = options.oneway; if ( oneway === void 0 ) oneway = false;
 
-  this.get = function () {
-    return key ? model.get(key) : model.attributes;
-  };
-  this.set = oneway ? noop : function (value) {
-    return key ? model.set(key, value) : model.set(value);
-  };
+  this.get = function () { return (key ? model.get(key) : model.attributes); };
+  this.set = oneway
+    ? noop
+    : function (value, options) {
+        return key ? model.set(key, value, options) : model.set(value, options);
+      };
 
   this.listenTo(model, key ? ("change:" + key) : 'change', function () {
     this$1.trigger('change', this$1.get());
   });
+
+  this._binding = { type: oneway ? 'oneway' : 'binding', model: model, key: key };
 }
 
-underscore.extend(Binding.prototype, backbone.Events, {_binding: true});
+underscore.extend(Binding.prototype, backbone.Events);
 
 function isBinding(binding) {
   return !!(binding && binding._binding);
@@ -42,47 +44,57 @@ function setValue(binding, value) {
   return isBinding(binding) && binding.set(value);
 }
 
-function Computed(model, keys, fn, options) {
-  var this$1 = this;
-
-  var events;
-  var has_cached = false;
-  var cached;
-
-  if (underscore.isFunction(keys)) {
-    options = fn;
-    fn = keys;
-    events = 'change';
-  } else if (Array.isArray(keys)) {
-    events = keys.map(function (key) { return ("change:" + key); }).join(' ');  
-  } else {
-    events = keys.split(' ').map(function (key) { return ("change:" + key); }).join(' ');
-  }
-
-  // For now, cache is opt-in
-  var should_cache = options && options.cache;
-
-  // TODO Ran into issues when computed is updated, but bound in component initialize
-  // Needs deeper fix with bindings in component.update to alleviate
-  
-  this.get = function () {
-    if (!has_cached || !should_cache) {
-      cached = fn();
-      has_cached = true;
-    }
-
-    return cached;
-  };
-
-  this.listenTo(model, events, function () {
-    cached = fn();
-    has_cached = true;
-
-    this$1.trigger('change', cached);
-  });
+function bound$1(model, key) {
+  return new Binding(model, key);
 }
 
-underscore.extend(Computed.prototype, backbone.Events, {_binding: true});
+function oneway$1(model, key) {
+  return new Binding(model, key, { oneway: true });
+}
+
+var noop$1 = function () {};
+
+function Computed(args, fn) {
+  var this$1 = this;
+
+  if (!args) { args = []; }
+  if (!Array.isArray(args)) { args = [args]; }
+
+  var values = args.map(getValue);
+  var result$$1 = fn(values);
+
+  this.get = function () { return result$$1; };
+  this.set = noop$1;
+
+  var models = [];
+  var bindings = [];
+
+  args.forEach(function (binding, index) {
+    if (!isBinding(binding)) { return; }    
+
+    if (binding._binding.model) {
+      models.push(binding._binding.model);
+    } else if (binding._binding.models) {
+      models = models.concat(binding._binding.models);
+    }
+    bindings.push(binding);
+
+    this$1.listenTo(binding, 'change', function () {
+      values[index] = getValue(binding);
+      result$$1 = fn(values);
+
+      this$1.trigger('change', result$$1);
+    });
+  });
+
+  this._binding = { type: 'computed', models: underscore.unique(models), bindings: bindings };
+}
+
+underscore.extend(Computed.prototype, backbone.Events);
+
+function computed$1(bindings, fn) {
+  return new Computed(bindings, fn);
+}
 
 function placeholder(id) {
   return new handlebars.SafeString('<script data-placeholder="' + id + '"></script>');
@@ -126,7 +138,7 @@ function get(model, key) {
   }
 }
 
-function bound(model, key) {
+function bound$$1(model, key) {
   if (!underscore.isString(key)) {
     key = undefined;
   }
@@ -134,15 +146,15 @@ function bound(model, key) {
   return new Binding(model, key);
 }
 
-function oneway(model, key) {
+function oneway$$1(model, key) {
   return new Binding(model, key, {oneway: true});
 }
 
-function computed(binding, fn) {
+function computed$$1(binding, fn) {
   if (!isBinding(binding))
     { return fn(binding); }
 
-  return new Computed(binding, function () { return fn(binding.get()); });
+  return new Computed(binding, fn);
 }
 
 function eq(a, b) {
@@ -167,17 +179,108 @@ handlebars.registerHelper('placeholder', placeholder);
 handlebars.registerHelper('outlet', outlet);
 handlebars.registerHelper('render', render);
 handlebars.registerHelper('get', get);
-handlebars.registerHelper('bound', bound);
-handlebars.registerHelper('oneway', oneway);
-handlebars.registerHelper('computed', computed);
+handlebars.registerHelper('bound', bound$$1);
+handlebars.registerHelper('oneway', oneway$$1);
+handlebars.registerHelper('computed', computed$$1);
 handlebars.registerHelper('eq', eq);
 handlebars.registerHelper('not', not);
 handlebars.registerHelper('array', array);
 handlebars.registerHelper('object', object);
 
+// TODO This could use intelligent grouping to group listening and setting by underlying model
+
+var BoundModel = backbone.Model.extend({
+  constructor: function BoundModel(values, options) {
+    if ( values === void 0 ) values = {};
+
+    var toConnect = {};
+    underscore.each(values, function (key, value) {
+      if (!isBinding(value)) { return; }
+
+      toConnect[key] = value;
+      values[key] = getValue(value);
+    });
+
+    backbone.Model.call(this, values, options);
+
+    this._bindings = {};
+    this.connect(toConnect);
+  },
+
+  set: function set(key, value, options) {
+    var this$1 = this;
+
+    options = underscore.isString(key) ? options : value;
+    var setBinding = function (key, value) {
+      if (!this$1._bindings[key]) { return; }
+
+      // Set silently for bindings on this model
+      var ref = this$1._bindings[key];
+      var binding = ref.binding;
+      var internal = ref.internal;
+      var silent = (options && options.silent) || internal;
+
+      binding.set(value, { silent: silent });
+    };
+
+    // Set binding(s)
+    if (underscore.isString(key)) {
+      setBinding(key, value);
+    } else {
+      underscore.each(key, function (value, key) { return setBinding(key, value); });
+    }
+
+    return backbone.Model.prototype.set.call(this, values, options);
+  },
+
+  connect: function connect(key, binding) {
+    var this$1 = this;
+
+    var addBinding = function (key, binding) {
+      if (!isBinding(binding)) {
+        backbone.Model.prototype.set.call(this$1, key, binding, { silent: true });
+        return;
+      }
+
+      // Check if already bound and stop listening for mismatch
+      if (this$1._bindings[key]) {
+        var existing = this$1._bindings[key].binding;
+        if (existing === binding) { return; }
+
+        this$1.stopListening(existing);
+      }
+
+      var ref = binding._binding;
+      var model = ref.model;
+      var models = ref.models;
+      var internal = model === this$1 || every(models, function (model) { return model === this$1; });
+      this$1._bindings[key] = { binding: binding, internal: internal };
+
+      this$1.listenTo(binding, 'change', function () {
+        backbone.Model.prototype.set.call(this$1, key, getValue(binding));
+      });
+
+      backbone.Model.prototype.set.call(this$1, key, getValue(binding), { silent: true });
+    };
+
+    if (underscore.isString(key)) {
+      addBinding(key, binding);
+    } else {
+      underscore.each(key, function (binding, key) { return addBinding(key, binding); });
+    }
+  }
+});
+
 var View$1 = backbone.View.extend({
-  constructor: function View$$1() {
-    backbone.View.apply(this, arguments);
+  constructor: function View$$1(options) {
+    // Create props and state before initialize is called
+    this.props =
+      options.props && underscore.isFunction(options.props.set)
+        ? options.props
+        : new BoundModel(options.props || {});
+    this.state = new BoundModel();
+
+    backbone.View.call(this, options);
 
     this._components = {};
   },
@@ -192,7 +295,7 @@ var View$1 = backbone.View.extend({
     });
     this._rendered = {};
 
-    var data = this.templateData ? this.templateData() : this;
+    var data = this.templateData();
     var html = this.template(data);
     this.$el.html(html);
 
@@ -219,7 +322,12 @@ var View$1 = backbone.View.extend({
     return this;
   },
 
-  template: function template() { return ''; },
+  templateData: function templateData() {
+    return this;
+  },
+  template: function template() {
+    return '';
+  },
 
   delegateEvents: function delegateEvents() {
     backbone.View.prototype.delegateEvents.call(this);
@@ -235,115 +343,117 @@ var View$1 = backbone.View.extend({
     underscore.each(this._components, function (component) {
       component.remove();
     });
-  },
-});
-
-var Component = View$1.extend({
-  defaultProps: {},
-
-  constructor: function Component(options) {
-    if ( options === void 0 ) options = {};
-
-    this.update(options.props);
-
-    // Pass model and collection through directly to view
-    // (there are other properties that could be set directly, but they are less intuitive)
-    if (this.props.model && !options.model) { options.model = this.props.model; }
-    if (this.props.collection && !options.collection) { options.collection = this.props.collection; }
-
-    View$1.call(this, options);
-  },
-
-  render: function render() {
-    var this$1 = this;
-
-    View$1.prototype.render.apply(this, arguments);
-
-    // Render children to outlet (if specified)
-    if (this.props.children) {
-      this.$('[data-outlet]').replaceWith(this.props.children());
-    }
-
-    // If component has child components, they may have been in outlet,
-    underscore.each(this._components, function (component, id) {
-      if (component._to_be_removed) {
-        // (already removed by View render)
-        return;
-      }
-
-      this$1.$('[data-placeholder="' + id + '"]').replaceWith(component.el);
-      component.render();
-    });
-
-    // Render active subviews
-    underscore.each(this._rendered, function (view, id) {
-      this$1.$('[data-placeholder="' + id + '"]').replaceWith(view.el);
-      view.render();
-    });
-
-    return this;
-  },
-
-  update: function update(props) {
-    this.props = underscore.defaults(props, underscore.result(this, 'defaultProps'));
-  },
-
-  remove: function remove() {
-    // Stop listening to any bound props
-    underscore.each(this.props, function (prop) {
-      if (prop && prop.stopListening)
-        { prop.stopListening(); }
-    });
-
-    View$1.prototype.remove.call(this);
-  },
-}, {
-  registerAs: function(name) {
-    var Type = this;
-    handlebars.registerHelper(name, function(id, view, options) {
-      if (!view) {
-        options = id;
-        view = (options && options.data && options.data.parent_component) || this;
-        id = underscore.uniqueId(name);
-      }
-      if (!options) {
-        options = view;
-        view = (options && options.data && options.data.parent_component) || this;
-      }
-      options = options || {};
-
-      var context = this;
-      var props = underscore.extend({
-        id: id,
-        children: children,
-      }, options.hash || {});
-      var data = (options.fn && options.data) ? handlebars.createFrame(options.data) : {};
-
-      var component = view._components[id];
-      if (!component)
-        { component = view._components[id] = new Type({ props: props }); }
-      else
-        { component.update(props); }
-
-      component._to_be_removed = false;
-      data.parent_component = component;
-
-      return handlebars.helpers.placeholder(id);
-
-      function children() {
-        var html = options.fn && options.fn(context, {data: data, blockParams: [component]});
-
-        if (isSafestring(html))
-          { return html.string; }
-
-        return html;
-      }
-    });
   }
 });
+
+var Component = View$1.extend(
+  {
+    defaultProps: {},
+
+    constructor: function Component(options) {
+      if ( options === void 0 ) options = {};
+
+      this.props = new BoundModel();
+      this.state = new BoundModel();
+
+      this.update(options.props);
+
+      // Pass model and collection through directly to view
+      // (there are other properties that could be set directly, but they are less intuitive)
+      if (options.props.model && !options.model)
+        { options.model = options.props.model; }
+      if (options.props.collection && !options.collection)
+        { options.collection = options.props.collection; }
+
+      View$1.call(this, options);
+    },
+
+    render: function render() {
+      var this$1 = this;
+
+      View$1.prototype.render.apply(this, arguments);
+
+      // Render children to outlet (if specified)
+      var children = this.props.get('children');
+      if (children) {
+        this.$('[data-outlet]').replaceWith(children());
+      }
+
+      // If component has child components, they may have been in outlet,
+      underscore.each(this._components, function (component, id) {
+        if (component._to_be_removed) {
+          // (already removed by View render)
+          return;
+        }
+
+        this$1.$('[data-placeholder="' + id + '"]').replaceWith(component.el);
+        component.render();
+      });
+
+      // Render active subviews
+      underscore.each(this._rendered, function (view, id) {
+        this$1.$('[data-placeholder="' + id + '"]').replaceWith(view.el);
+        view.render();
+      });
+
+      return this;
+    },
+
+    update: function update(props) {
+      this.props.connect(underscore.defaults(props, underscore.result(this, 'defaultProps')));
+    }
+  },
+  {
+    registerAs: function(name) {
+      var Type = this;
+      handlebars.registerHelper(name, function(id, view, options) {
+        if (!view) {
+          options = id;
+          view =
+            (options && options.data && options.data.parent_component) || this;
+          id = underscore.uniqueId(name);
+        }
+        if (!options) {
+          options = view;
+          view =
+            (options && options.data && options.data.parent_component) || this;
+        }
+        options = options || {};
+
+        var context = this;
+        var props = underscore.extend(
+          {
+            id: id,
+            children: children
+          },
+          options.hash || {}
+        );
+        var data = options.fn && options.data ? handlebars.createFrame(options.data) : {};
+
+        var component = view._components[id];
+        if (!component) { component = view._components[id] = new Type({ props: props }); }
+        else { component.update(props); }
+
+        component._to_be_removed = false;
+        data.parent_component = component;
+
+        return handlebars.helpers.placeholder(id);
+
+        function children() {
+          var html =
+            options.fn &&
+            options.fn(context, { data: data, blockParams: [component] });
+
+          if (isSafestring(html)) { return html.string; }
+
+          return html;
+        }
+      });
+    }
+  }
+);
 function isSafestring(value) {
-  if (!value || underscore.isString(value))
-    { return false; }
+  if (!value || underscore.isString(value)) { return false; }
 
   return 'string' in value;
 }
@@ -352,7 +462,7 @@ var Region = Component.extend({
   defaultProps: {
     binding: null,
     bindings: [],
-    className: '',
+    class: '',
     style: '',
     inline: false
   },
@@ -376,24 +486,29 @@ var Region = Component.extend({
   render: function render() {
     var style = this.props.style;
     if (this.props.inline) {
-      style = 'display: inline-block;' + (style ? ' ' + style : '');
+      style = "display: inline-block;" + (style ? (" " + style) : '');
     }
 
     this.$el.attr('style', style);
-    this.$el.removeClass().addClass(this.props.className);
+    this.$el.removeClass().addClass(this.props.className || this.props.class);
 
-    return Component.prototype.render.call(this);
+    Component.prototype.render.call(this);
+    return this;
   }
 });
 Region.registerAs('region');
 
-var version = "0.3.6";
+var version = "0.4.0-beta.1";
 
 exports.Binding = Binding;
+exports.bound = bound$1;
+exports.oneway = oneway$1;
 exports.isBinding = isBinding;
 exports.getValue = getValue;
 exports.setValue = setValue;
 exports.Computed = Computed;
+exports.computed = computed$1;
+exports.BoundModel = BoundModel;
 exports.View = View$1;
 exports.Component = Component;
 exports.VERSION = version;

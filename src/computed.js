@@ -14,7 +14,7 @@ export default function Computed(args, fn) {
   this.get = () => result;
   this.set = noop;
 
-  const models = [];
+  let models = [];
   const bindings = [];
 
   args.forEach((binding, index) => {
