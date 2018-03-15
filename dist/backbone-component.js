@@ -279,11 +279,7 @@ var BoundModel = backbone.Model.extend({
 
 var View = backbone.View.extend({
   constructor: function View(options) {
-    // Create props and state before initialize is called
-    this.props =
-      options.props && underscore.isFunction(options.props.set)
-        ? options.props
-        : new BoundModel(options.props || {});
+    // Create state before initialize is called
     this.state = new BoundModel();
 
     backbone.View.call(this, options);
@@ -506,8 +502,23 @@ var Region = Component.extend({
 
 Region.registerAs('region');
 
+function Observable(value) {
+  var this$1 = this;
+
+  this.get = function () { return value; };
+  this.set = function (_value) {
+    value = _value;
+    this$1.trigger('change', value);
+  };
+
+  this._binding = { type: 'observable', models: [] };
+}
+
+underscore.extend(Observable.prototype, backbone.Events);
+
 var version = "0.4.0-beta.1";
 
+exports.Observable = Observable;
 exports.Binding = Binding;
 exports.bound = bound;
 exports.oneway = oneway;
