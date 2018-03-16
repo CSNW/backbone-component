@@ -6,9 +6,18 @@ import { bound } from './binding';
 const noop = () => {};
 
 export default function Computed(model, key, fn) {
+  // Overload argments:
+  //
+  // (model, key, fn) -> bound(model, key)
+  // (model, fn) -> bound(model)
+  // (binding, fn)
+  // (bindings, fn)
   let args;
   if (isString(key)) {
     args = [bound(model, key)];
+  } else if (!Array.isArray(model) && !isObservable(model)) {
+    fn = key;
+    args = [bound(model)];
   } else {
     fn = key;
     args = !model ? [] : !Array.isArray(model) ? [model] : model;

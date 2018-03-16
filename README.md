@@ -4,15 +4,15 @@ Backbone + Handlebars component system.
 
 ## Installation
 
-1. To install with `npm`, add to project's package.json
-    
+1.  To install with `npm`, add to project's package.json
+
     ```json
     "dependencies": {
       "backbone-component": "git+https://github.com/CSNW/backbone-component.git#v0.3.5"
     }
     ```
 
-2. Require or import backbone-component
+2.  Require or import backbone-component
 
     ```js
     var BackboneComponent = require('backbone-component');
@@ -26,7 +26,7 @@ Backbone + Handlebars component system.
 ### Component + View
 
 ```js
-import {Component} from 'backbone-component';
+import { Component } from 'backbone-component';
 
 const template = Handlebars.compile(`Hello {{get props "name"}}`);
 //                                           ^ get helpers is used to get value from model
@@ -37,7 +37,7 @@ const SayHiComponent = Component.extend({
   // Component receives props from parent view
   // (defaultProps will be merged into these props)
   defaultProps: {
-    name: 'World',
+    name: 'World'
   }
 });
 
@@ -46,9 +46,9 @@ SayHiComponent.registerAs('say-hi');
 ```
 
 ```js
-import {View} from 'backbone-component';
+import { View } from 'backbone-component';
 
-const template = Handlebars.compile(`Message: {{say-hi name="Universe"}}`)
+const template = Handlebars.compile(`Message: {{say-hi name="Universe"}}`);
 
 export default View.extend({
   template
@@ -67,7 +67,7 @@ const InputComponent = Component.extend({
   },
 
   events: {
-    'change': 'handleChange'
+    change: 'handleChange'
   },
 
   initialize() {
@@ -90,13 +90,15 @@ InputComponent.registerAs('input');
 ```js
 import { View } from 'backbone-component';
 
-const template = Handlebars.compile(`Name: {{input value=(bound state "name")}}`);
+const template = Handlebars.compile(
+  `Name: {{input value=(bound model "name")}}`
+);
 
 export default View.extend({
   template,
 
   initialize() {
-    this.state.set({ name: 'Tim' });
+    this.model.set({ name: 'Tim' });
   }
 });
 ```
@@ -124,7 +126,7 @@ import { View, computed } from 'backbone-component';
 
 const template = Handlebars.compile(`
   Quiet: {{display-message message=quiet}}
-  Yelling: {{display-message message=(computed (bound state "message") toUpperCase)}}
+  Yelling: {{display-message message=(computed (bound model "message") toUpperCase)}}
   {{!                                 ^ computed can be used inline in combination with bound}}
 `);
 
@@ -132,10 +134,10 @@ export default View.extend({
   template,
 
   initialize() {
-    this.state.set({ message: 'Hello World' });
+    this.model.set({ message: 'Hello World' });
 
     // Create computed value
-    this.quiet = computed(this.state, 'message', this.toLowerCase);
+    this.quiet = computed(this.model, 'message', this.toLowerCase);
   },
 
   toLowerCase: message => message.toLowerCase(),
@@ -177,20 +179,20 @@ export default View.extend({
 
 Models, Bindings, and Computed:
 
-- `{{get model "key"}}` or `{{get binding}}` - Get underlying value for Backbone Model, Binding, or Computed
-- `(bound model "key")` - Create a two-way binding to the given model and key
-- `(oneway model "key")` - Create a one-way (get only) binding to the given model and key
-- `(computed binding fn)` or `(computed value fn)` - Map the given binding/value through the given function
+* `{{get model "key"}}` or `{{get binding}}` - Get underlying value for Backbone Model, Binding, or Computed
+* `(bound model "key")` - Create a two-way binding to the given model and key
+* `(oneway model "key")` - Create a one-way (get only) binding to the given model and key
+* `(computed binding fn)` or `(computed value fn)` - Map the given binding/value through the given function
 
 Components and Views:
 
-- `{{outlet}}` - Outlet for block components
-- `{{render view}}` - Render given view in template
-- `{{placeholder "id"}}` - (internal) Insert placeholder to be replaced in render
+* `{{outlet}}` - Outlet for block components
+* `{{render view}}` - Render given view in template
+* `{{placeholder "id"}}` - (internal) Insert placeholder to be replaced in render
 
 Utilities:
 
-- `(eq a b)` - Check if two values are equal (using `==`) (e.g. `{{#if (eq a b)}}...{{/if}}`
-- `(not c)` - Get inverse of value (using `!`)
-- `(array 1 2 3)` - Create array from values
-- `(object a=1 b=2)` - Create array from key-values
+* `(eq a b)` - Check if two values are equal (using `==`) (e.g. `{{#if (eq a b)}}...{{/if}}`
+* `(not c)` - Get inverse of value (using `!`)
+* `(array 1 2 3)` - Create array from values
+* `(object a=1 b=2)` - Create array from key-values

@@ -21,6 +21,10 @@ function Observable(value) {
 }
 underscore.extend(Observable.prototype, backbone.Events);
 
+function observable(value) {
+  return new Observable(value);
+}
+
 function isObservable(binding) {
   return !!(binding && binding._binding);
 }
@@ -53,6 +57,10 @@ var cache = (function () {
 function Binding(model, key, options) {
   var this$1 = this;
   if ( options === void 0 ) options = {};
+
+  if (!model) {
+    throw new Error('No model passed to Binding');
+  }
 
   var cached = cache.get(model, key);
   if (cached) { return cached; }
@@ -89,9 +97,18 @@ var noop$1 = function () {};
 function Computed(model, key, fn) {
   var this$1 = this;
 
+  // Overload argments:
+  //
+  // (model, key, fn) -> bound(model, key)
+  // (model, fn) -> bound(model)
+  // (binding, fn)
+  // (bindings, fn)
   var args;
   if (underscore.isString(key)) {
     args = [bound(model, key)];
+  } else if (!Array.isArray(model) && !isObservable(model)) {
+    fn = key;
+    args = [bound(model)];
   } else {
     fn = key;
     args = !model ? [] : !Array.isArray(model) ? [model] : model;
@@ -322,11 +339,7 @@ var BoundModel = backbone.Model.extend({
 
 var View = backbone.View.extend({
   constructor: function View(options) {
-    // Create state before initialize is called
-    this.state = new BoundModel();
-
     backbone.View.call(this, options);
-
     this._components = {};
   },
 
@@ -399,8 +412,6 @@ var Component = View.extend(
       if ( options === void 0 ) options = {};
 
       this.props = new BoundModel();
-      this.state = new BoundModel();
-
       this.update(options.props);
 
       // Pass model and collection through directly to view
@@ -446,6 +457,13 @@ var Component = View.extend(
 
     update: function update(props) {
       this.props.connect(underscore.defaults(props, underscore.result(this, 'defaultProps')));
+    },
+
+    remove: function remove() {
+      View.prototype.remove.call(this);
+
+      // Force teardown of props and model
+      this.props.stopListening();
     }
   },
   {
@@ -473,7 +491,8 @@ var Component = View.extend(
           },
           options.hash || {}
         );
-        var data = options.fn && options.data ? handlebars.createFrame(options.data) : {};
+        var data =
+          options.fn && options.data ? handlebars.createFrame(options.data) : {};
 
         var component = view._components[id];
         if (!component) { component = view._components[id] = new Type({ props: props }); }
@@ -564,9 +583,51 @@ function listener(model, keys) {
   return new Listener(model, keys);
 }
 
+var noop$3 = function () {};
+
+function Resolved(binding) {
+  var this$1 = this;
+
+  var current;
+  var handle = function (value) {
+    return Promise.resolve(value).then(
+      function (result) {
+        current = result;
+        this$1.trigger('change', current);
+      },
+      function (error) {
+        this$1.trigger('error', error);
+      }
+    );
+  };
+
+  handle(getValue(binding));
+
+  this.get = function () { return current; };
+  this.set = noop$3;
+
+  var models = [];
+  if (isObservable(binding)) {
+    if (binding._binding.model) { models = [binding._binding.model]; }
+    else if (binding._binding.models) { models = binding._binding.models; }
+
+    this.listenTo(binding, 'change', function () {
+      handle(getValue(binding));
+    });
+  }
+
+  this._binding = { type: 'resolved', models: models };
+}
+underscore.extend(Resolved.prototype, backbone.Events);
+
+function resolved(value) {
+  return new Resolved(value);
+}
+
 var version = "0.4.0";
 
 exports.Observable = Observable;
+exports.observable = observable;
 exports.isObservable = isObservable;
 exports.getValue = getValue;
 exports.setValue = setValue;
@@ -577,6 +638,8 @@ exports.Computed = Computed;
 exports.computed = computed;
 exports.Listener = Listener;
 exports.listener = listener;
+exports.Resolved = Resolved;
+exports.resolved = resolved;
 exports.BoundModel = BoundModel;
 exports.View = View;
 exports.Component = Component;

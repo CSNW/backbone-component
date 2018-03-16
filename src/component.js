@@ -9,8 +9,6 @@ var Component = View.extend(
 
     constructor: function Component(options = {}) {
       this.props = new BoundModel();
-      this.state = new BoundModel();
-
       this.update(options.props);
 
       // Pass model and collection through directly to view
@@ -54,6 +52,13 @@ var Component = View.extend(
 
     update(props) {
       this.props.connect(defaults(props, result(this, 'defaultProps')));
+    },
+
+    remove() {
+      View.prototype.remove.call(this);
+
+      // Force teardown of props and model
+      this.props.stopListening();
     }
   },
   {
@@ -73,17 +78,18 @@ var Component = View.extend(
         }
         options = options || {};
 
-        var context = this;
-        var props = extend(
+        const context = this;
+        const props = extend(
           {
             id,
             children
           },
           options.hash || {}
         );
-        var data = options.fn && options.data ? createFrame(options.data) : {};
+        const data =
+          options.fn && options.data ? createFrame(options.data) : {};
 
-        var component = view._components[id];
+        let component = view._components[id];
         if (!component) component = view._components[id] = new Type({ props });
         else component.update(props);
 

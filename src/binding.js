@@ -21,6 +21,10 @@ const cache = (() => {
 const _cache = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
 
 export default function Binding(model, key, options = {}) {
+  if (!model) {
+    throw new Error('No model passed to Binding');
+  }
+
   const cached = cache.get(model, key);
   if (cached) return cached;
 
