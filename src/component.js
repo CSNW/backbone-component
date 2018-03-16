@@ -9,6 +9,8 @@ var Component = View.extend(
 
     constructor: function Component(options = {}) {
       this.props = new BoundModel();
+      this.state = new BoundModel();
+
       this.update(options.props);
 
       // Pass model and collection through directly to view
@@ -57,8 +59,9 @@ var Component = View.extend(
     remove() {
       View.prototype.remove.call(this);
 
-      // Force teardown of props and model
+      // Force teardown of props and state
       this.props.stopListening();
+      this.state.stopListening();
     }
   },
   {

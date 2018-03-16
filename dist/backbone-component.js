@@ -339,6 +339,8 @@ var BoundModel = backbone.Model.extend({
 
 var View = backbone.View.extend({
   constructor: function View(options) {
+    this.state = new BoundModel();
+
     backbone.View.call(this, options);
     this._components = {};
   },
@@ -381,6 +383,11 @@ var View = backbone.View.extend({
   },
 
   templateData: function templateData() {
+    // TODO Think about passing JS values of state, props, model, and collection
+    // e.g. (get state "key") -> state.key
+    //
+    // could add __underlying key for use with binding
+
     return this;
   },
   template: function template() {
@@ -398,9 +405,13 @@ var View = backbone.View.extend({
   },
 
   remove: function remove() {
+    backbone.View.prototype.remove.call(this);
+
     underscore.each(this._components, function (component) {
       component.remove();
     });
+
+    this.state.stopListening();
   }
 });
 
@@ -412,6 +423,8 @@ var Component = View.extend(
       if ( options === void 0 ) options = {};
 
       this.props = new BoundModel();
+      this.state = new BoundModel();
+
       this.update(options.props);
 
       // Pass model and collection through directly to view
@@ -462,8 +475,9 @@ var Component = View.extend(
     remove: function remove() {
       View.prototype.remove.call(this);
 
-      // Force teardown of props and model
+      // Force teardown of props and state
       this.props.stopListening();
+      this.state.stopListening();
     }
   },
   {

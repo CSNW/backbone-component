@@ -4,6 +4,8 @@ import BoundModel from './bound-model';
 
 var View = BackboneView.extend({
   constructor: function View(options) {
+    this.state = new BoundModel();
+
     BackboneView.call(this, options);
     this._components = {};
   },
@@ -44,6 +46,11 @@ var View = BackboneView.extend({
   },
 
   templateData() {
+    // TODO Think about passing JS values of state, props, model, and collection
+    // e.g. (get state "key") -> state.key
+    //
+    // could add __underlying key for use with binding
+
     return this;
   },
   template() {
@@ -61,9 +68,13 @@ var View = BackboneView.extend({
   },
 
   remove() {
+    BackboneView.prototype.remove.call(this);
+
     each(this._components, component => {
       component.remove();
     });
+
+    this.state.stopListening();
   }
 });
 export default View;
