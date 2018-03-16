@@ -1,6 +1,6 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.5.0 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.5.1 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('backbone'), require('handlebars')) :
@@ -638,7 +638,7 @@ function resolved(value) {
   return new Resolved(value);
 }
 
-var version = "0.5.0";
+var version = "0.5.1";
 
 exports.Observable = Observable;
 exports.observable = observable;
