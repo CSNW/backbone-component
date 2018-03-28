@@ -7,18 +7,19 @@ const noop = () => {};
 
 export default function Computed(model, key, fn) {
   // Overload argments:
-  //
-  // (model, key, fn) -> bound(model, key)
-  // (model, fn) -> bound(model)
-  // (binding, fn)
-  // (bindings, fn)
   let args;
   if (isString(key)) {
+    // (model, key, fn)
     args = [bound(model, key)];
+  } else if (Array.isArray(key)) {
+    // (model, keys, fn)
+    args = key.map(key => bound(model, key));
   } else if (!Array.isArray(model) && !isObservable(model)) {
+    // (model, fn)
     fn = key;
     args = [bound(model)];
   } else {
+    // (binding(s), fn)
     fn = key;
     args = !model ? [] : !Array.isArray(model) ? [model] : model;
   }

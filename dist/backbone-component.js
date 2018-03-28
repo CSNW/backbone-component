@@ -98,18 +98,19 @@ function Computed(model, key, fn) {
   var this$1 = this;
 
   // Overload argments:
-  //
-  // (model, key, fn) -> bound(model, key)
-  // (model, fn) -> bound(model)
-  // (binding, fn)
-  // (bindings, fn)
   var args;
   if (underscore.isString(key)) {
+    // (model, key, fn)
     args = [bound(model, key)];
+  } else if (Array.isArray(key)) {
+    // (model, keys, fn)
+    args = key.map(function (key) { return bound(model, key); });
   } else if (!Array.isArray(model) && !isObservable(model)) {
+    // (model, fn)
     fn = key;
     args = [bound(model)];
   } else {
+    // (binding(s), fn)
     fn = key;
     args = !model ? [] : !Array.isArray(model) ? [model] : model;
   }
