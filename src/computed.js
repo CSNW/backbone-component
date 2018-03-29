@@ -25,6 +25,7 @@ export default function Computed(model, key, fn) {
   }
 
   const values = args.map(getValue);
+  let initialized = false;
   let get, set, result;
   if (isFunction(fn)) {
     get = () => fn.apply(null, values);
@@ -34,8 +35,14 @@ export default function Computed(model, key, fn) {
     set = value => (result = fn.set(value));
   }
 
-  result = get();
-  this.get = () => result;
+  this.get = () => {
+    if (!initialized) {
+      initialized = true;
+      result = get();
+    }
+
+    return result;
+  };
   this.set = set;
 
   let models = [];

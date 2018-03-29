@@ -116,6 +116,7 @@ function Computed(model, key, fn) {
   }
 
   var values = args.map(getValue);
+  var initialized = false;
   var get, set, result;
   if (underscore.isFunction(fn)) {
     get = function () { return fn.apply(null, values); };
@@ -125,8 +126,14 @@ function Computed(model, key, fn) {
     set = function (value) { return (result = fn.set(value)); };
   }
 
-  result = get();
-  this.get = function () { return result; };
+  this.get = function () {
+    if (!initialized) {
+      initialized = true;
+      result = get();
+    }
+
+    return result;
+  };
   this.set = set;
 
   var models = [];
