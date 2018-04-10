@@ -69,7 +69,8 @@ function eq(a, b) {
 }
 
 function not(value) {
-  return !value;
+  if (!isObservable(value)) return !value;
+  return computed(value, value => !value);
 }
 
 function array() {

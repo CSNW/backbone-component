@@ -234,7 +234,8 @@ function eq(a, b) {
 }
 
 function not(value) {
-  return !value;
+  if (!isObservable(value)) { return !value; }
+  return computed$1(value, function (value) { return !value; });
 }
 
 function array() {
