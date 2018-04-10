@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "backbone-component",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "Backbone + Handlebars components",
   "homepage": "https://github.com/CSNW/backbone-component",
   "main": "dist/backbone-component.js",
