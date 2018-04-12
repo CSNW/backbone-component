@@ -1,14 +1,11 @@
 {
   "private": true,
   "name": "backbone-component",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "Backbone + Handlebars components",
   "homepage": "https://github.com/CSNW/backbone-component",
   "main": "dist/backbone-component.js",
-  "keywords": [
-    "Backbone",
-    "Component"
-  ],
+  "keywords": ["Backbone", "Component"],
   "author": "Tim Hall <timhall@cornerstonenw.com> (https://github.com/timhall)",
   "repository": {
     "type": "git",
