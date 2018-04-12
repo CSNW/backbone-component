@@ -5,7 +5,10 @@
   "description": "Backbone + Handlebars components",
   "homepage": "https://github.com/CSNW/backbone-component",
   "main": "dist/backbone-component.js",
-  "keywords": ["Backbone", "Component"],
+  "keywords": [
+    "Backbone",
+    "Component"
+  ],
   "author": "Tim Hall <timhall@cornerstonenw.com> (https://github.com/timhall)",
   "repository": {
     "type": "git",
@@ -19,7 +22,7 @@
   },
   "devDependencies": {
     "rollup": "^0.57.0",
-    "rollup-plugin-buble": "^0.15.0",
+    "rollup-plugin-buble": "^0.19.2",
     "rollup-plugin-json": "^2.1.0"
   },
   "dependencies": {
