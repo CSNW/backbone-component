@@ -197,18 +197,30 @@
     return placeholder(subview.cid);
   }
 
-  function get(model, key) {
+  function get(model) {
+    var keys = [], len = arguments.length - 1;
+    while ( len-- > 0 ) keys[ len ] = arguments[ len + 1 ];
+
+    var options = keys.pop();
     model = getValue(model);
 
-    if (!underscore.isString(key) || !model) {
+    if (!model) {
+      return undefined;
+    }
+    if (!keys.length) {
       return model;
     }
 
-    if (model.get) {
-      return model.get(key);
-    } else {
-      return model[key];
-    }
+    return keys.reduce(function (memo, key) {
+      memo = getValue(memo);
+      if (!memo) { return undefined; }
+
+      if (memo.get) {
+        return memo.get(key);
+      } else {
+        return memo[key];
+      }
+    }, model);
   }
 
   function bound$1(model, key) {

@@ -32,18 +32,27 @@ function render(view, subview, context, options) {
   return placeholder(subview.cid);
 }
 
-function get(model, key) {
+function get(model, ...keys) {
+  const options = keys.pop();
   model = getValue(model);
 
-  if (!isString(key) || !model) {
+  if (!model) {
+    return undefined;
+  }
+  if (!keys.length) {
     return model;
   }
 
-  if (model.get) {
-    return model.get(key);
-  } else {
-    return model[key];
-  }
+  return keys.reduce((memo, key) => {
+    memo = getValue(memo);
+    if (!memo) return undefined;
+
+    if (memo.get) {
+      return memo.get(key);
+    } else {
+      return memo[key];
+    }
+  }, model);
 }
 
 function bound(model, key) {
