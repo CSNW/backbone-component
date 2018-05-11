@@ -36,11 +36,11 @@ function get(model, ...keys) {
   const options = keys.pop();
   model = getValue(model);
 
-  if (!model) {
-    return undefined;
-  }
   if (!keys.length) {
     return model;
+  }
+  if (!model) {
+    return undefined;
   }
 
   return keys.reduce((memo, key) => {
