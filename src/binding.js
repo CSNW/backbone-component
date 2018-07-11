@@ -37,8 +37,8 @@ export default function Binding(model, key, options = {}) {
         return key ? model.set(key, value, options) : model.set(value, options);
       };
 
-  this.listenTo(model, key ? `change:${key}` : 'change', () => {
-    this.trigger('change', this.get());
+  this.listenTo(model, key ? `change:${key}` : 'change', (_1, _2, options) => {
+    this.trigger('change', this.get(), options);
   });
 
   this._binding = { type: oneway ? 'oneway' : 'binding', model, key };

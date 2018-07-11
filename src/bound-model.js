@@ -63,8 +63,8 @@ export default Model.extend({
         : every(models, model => model === this);
       this._bindings[key] = { binding, internal };
 
-      this.listenTo(binding, 'change', () => {
-        Model.prototype.set.call(this, key, getValue(binding));
+      this.listenTo(binding, 'change', (_, options) => {
+        Model.prototype.set.call(this, key, getValue(binding), options);
       });
 
       Model.prototype.set.call(this, key, getValue(binding), { silent: true });

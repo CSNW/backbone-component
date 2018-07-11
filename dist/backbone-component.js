@@ -74,8 +74,8 @@
           return key ? model.set(key, value, options) : model.set(value, options);
         };
 
-    this.listenTo(model, key ? ("change:" + key) : 'change', function () {
-      this$1.trigger('change', this$1.get());
+    this.listenTo(model, key ? ("change:" + key) : 'change', function (_1, _2, options) {
+      this$1.trigger('change', this$1.get(), options);
     });
 
     this._binding = { type: oneway ? 'oneway' : 'binding', model: model, key: key };
@@ -343,8 +343,8 @@
           : underscore.every(models, function (model) { return model === this$1; });
         this$1._bindings[key] = { binding: binding, internal: internal };
 
-        this$1.listenTo(binding, 'change', function () {
-          backbone.Model.prototype.set.call(this$1, key, getValue(binding));
+        this$1.listenTo(binding, 'change', function (_, options) {
+          backbone.Model.prototype.set.call(this$1, key, getValue(binding), options);
         });
 
         backbone.Model.prototype.set.call(this$1, key, getValue(binding), { silent: true });
