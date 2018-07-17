@@ -1,6 +1,6 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.5.8 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.5.9 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('backbone'), require('handlebars')) :
@@ -305,7 +305,7 @@
         var internal = ref.internal;
         var silent = (options && options.silent) || internal;
 
-        binding.set(value, { silent: silent });
+        binding.set(value, underscore.assign(options, { silent: silent }));
       };
 
       // Set binding(s)
@@ -697,7 +697,7 @@
     return new Resolved(value);
   }
 
-  var version = "0.5.8";
+  var version = "0.5.9";
 
   exports.Observable = Observable;
   exports.observable = observable;
