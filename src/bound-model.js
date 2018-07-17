@@ -1,4 +1,4 @@
-import { isString, each, every } from 'underscore';
+import { isString, each, every, assign } from 'underscore';
 import { Model } from 'backbone';
 import { isObservable, getValue } from './observable';
 
@@ -29,7 +29,7 @@ export default Model.extend({
       const { binding, internal } = this._bindings[key];
       const silent = (options && options.silent) || internal;
 
-      binding.set(value, { silent });
+      binding.set(value, assign(options, { silent }));
     };
 
     // Set binding(s)
