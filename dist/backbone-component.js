@@ -1,6 +1,6 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.5.10 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.5.11 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('backbone'), require('handlebars')) :
@@ -583,7 +583,7 @@
 
     render: function render() {
       var style = this.props.style;
-      if (this.props.inline) {
+      if (this.props.get('inline')) {
         style = "display: inline-block;" + (style ? (" " + style) : '');
       }
 
@@ -697,7 +697,7 @@
     return new Resolved(value);
   }
 
-  var version = "0.5.10";
+  var version = "0.5.11";
 
   exports.Observable = Observable;
   exports.observable = observable;
