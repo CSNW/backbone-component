@@ -23,7 +23,7 @@ const Region = Component.extend({
 
   render() {
     let style = this.props.style;
-    if (this.props.inline) {
+    if (this.props.get('inline')) {
       style = `display: inline-block;${style ? ` ${style}` : ''}`;
     }
 
