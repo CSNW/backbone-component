@@ -1,20 +1,20 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.5.11 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.5.12 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('backbone'), require('handlebars')) :
-  typeof define === 'function' && define.amd ? define(['exports', 'underscore', 'backbone', 'handlebars'], factory) :
-  (factory((global.BackboneComponent = {}),global._,global.Backbone,global.Handlebars));
-}(this, (function (exports,underscore,backbone,handlebars) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('handlebars'), require('backbone')) :
+  typeof define === 'function' && define.amd ? define(['exports', 'underscore', 'handlebars', 'backbone'], factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.BackboneComponent = {}, global._, global.Handlebars, global.Backbone));
+})(this, (function (exports, underscore, handlebars, backbone) { 'use strict';
 
   function Observable(value) {
-    var this$1 = this;
+    var this$1$1 = this;
 
     this.get = function () { return value; };
     this.set = function (_value) {
       value = _value;
-      this$1.trigger('change', value);
+      this$1$1.trigger('change', value);
     };
 
     this._binding = { type: 'observable', models: [] };
@@ -37,10 +37,10 @@
     return isObservable(binding) && binding.set(value);
   }
 
-  var noop = function () {};
+  var noop$3 = function () {};
 
   var cache = (function () {
-    if (typeof WeakMap === 'undefined') { return { get: noop, set: noop }; }
+    if (typeof WeakMap === 'undefined') { return { get: noop$3, set: noop$3 }; }
 
     var cache = new WeakMap();
     return {
@@ -55,7 +55,7 @@
   })();
 
   function Binding(model, key, options) {
-    var this$1 = this;
+    var this$1$1 = this;
     if ( options === void 0 ) options = {};
 
     if (!model) {
@@ -69,13 +69,13 @@
 
     this.get = function () { return (key ? model.get(key) : model.attributes); };
     this.set = oneway
-      ? noop
+      ? noop$3
       : function (value, options) {
           return key ? model.set(key, value, options) : model.set(value, options);
         };
 
     this.listenTo(model, key ? ("change:" + key) : 'change', function (_1, _2, options) {
-      this$1.trigger('change', this$1.get(), options);
+      this$1$1.trigger('change', this$1$1.get(), options);
     });
 
     this._binding = { type: oneway ? 'oneway' : 'binding', model: model, key: key };
@@ -84,31 +84,31 @@
 
   underscore.extend(Binding.prototype, backbone.Events);
 
-  function bound(model, key) {
+  function bound$1(model, key) {
     return new Binding(model, key);
   }
 
-  function oneway(model, key) {
+  function oneway$1(model, key) {
     return new Binding(model, key, { oneway: true });
   }
 
-  var noop$1 = function () {};
+  var noop$2 = function () {};
 
   function Computed(model, key, fn) {
-    var this$1 = this;
+    var this$1$1 = this;
 
     // Overload argments:
     var args;
     if (underscore.isString(key)) {
       // (model, key, fn)
-      args = [bound(model, key)];
+      args = [bound$1(model, key)];
     } else if (Array.isArray(key)) {
       // (model, keys, fn)
-      args = key.map(function (key) { return bound(model, key); });
+      args = key.map(function (key) { return bound$1(model, key); });
     } else if (!Array.isArray(model) && !isObservable(model)) {
       // (model, fn)
       fn = key;
-      args = [bound(model)];
+      args = [bound$1(model)];
     } else {
       // (binding(s), fn)
       fn = key;
@@ -120,7 +120,7 @@
     var get, set, result;
     if (underscore.isFunction(fn)) {
       get = function () { return fn.apply(null, values); };
-      set = noop$1;
+      set = noop$2;
     } else {
       get = function () { return fn.get.apply(null, values); };
       set = function (value) { return (result = fn.set(value)); };
@@ -152,11 +152,11 @@
       }
       bindings.push(binding);
 
-      this$1.listenTo(binding, 'change', function () {
+      this$1$1.listenTo(binding, 'change', function () {
         values[index] = getValue(binding);
         result = get();
 
-        this$1.trigger('change', result);
+        this$1$1.trigger('change', result);
       });
     });
 
@@ -165,7 +165,7 @@
 
   underscore.extend(Computed.prototype, backbone.Events);
 
-  function computed(model, key, fn) {
+  function computed$1(model, key, fn) {
     return new Computed(model, key, fn);
   }
 
@@ -201,7 +201,7 @@
     var keys = [], len = arguments.length - 1;
     while ( len-- > 0 ) keys[ len ] = arguments[ len + 1 ];
 
-    var options = keys.pop();
+    keys.pop();
     model = getValue(model);
 
     if (!keys.length) {
@@ -223,7 +223,7 @@
     }, model);
   }
 
-  function bound$1(model, key) {
+  function bound(model, key) {
     if (!underscore.isString(key)) {
       key = undefined;
     }
@@ -231,11 +231,11 @@
     return new Binding(model, key);
   }
 
-  function oneway$1(model, key) {
+  function oneway(model, key) {
     return new Binding(model, key, { oneway: true });
   }
 
-  function computed$1(binding, fn) {
+  function computed(binding, fn) {
     if (!isObservable(binding)) { return fn(binding); }
 
     return new Computed(binding, fn);
@@ -247,7 +247,7 @@
 
   function not(value) {
     if (!isObservable(value)) { return !value; }
-    return computed$1(value, function (value) { return !value; });
+    return computed(value, function (value) { return !value; });
   }
 
   function array() {
@@ -264,9 +264,9 @@
   handlebars.registerHelper('outlet', outlet);
   handlebars.registerHelper('render', render);
   handlebars.registerHelper('get', get);
-  handlebars.registerHelper('bound', bound$1);
-  handlebars.registerHelper('oneway', oneway$1);
-  handlebars.registerHelper('computed', computed$1);
+  handlebars.registerHelper('bound', bound);
+  handlebars.registerHelper('oneway', oneway);
+  handlebars.registerHelper('computed', computed);
   handlebars.registerHelper('eq', eq);
   handlebars.registerHelper('not', not);
   handlebars.registerHelper('array', array);
@@ -293,14 +293,14 @@
     },
 
     set: function set(key, value, options) {
-      var this$1 = this;
+      var this$1$1 = this;
 
       options = underscore.isString(key) ? options : value;
       var setBinding = function (key, value) {
-        if (!this$1._bindings[key]) { return; }
+        if (!this$1$1._bindings[key]) { return; }
 
         // Set silently for bindings on this model
-        var ref = this$1._bindings[key];
+        var ref = this$1$1._bindings[key];
         var binding = ref.binding;
         var internal = ref.internal;
         var silent = (options && options.silent) || internal;
@@ -319,35 +319,35 @@
     },
 
     connect: function connect(key, binding) {
-      var this$1 = this;
+      var this$1$1 = this;
 
       var addBinding = function (key, binding) {
         if (!isObservable(binding)) {
-          backbone.Model.prototype.set.call(this$1, key, binding, { silent: true });
+          backbone.Model.prototype.set.call(this$1$1, key, binding, { silent: true });
           return;
         }
 
         // Check if already bound and stop listening for mismatch
-        if (this$1._bindings[key]) {
-          var existing = this$1._bindings[key].binding;
+        if (this$1$1._bindings[key]) {
+          var existing = this$1$1._bindings[key].binding;
           if (existing === binding) { return; }
 
-          this$1.stopListening(existing);
+          this$1$1.stopListening(existing);
         }
 
         var ref = binding._binding;
         var model = ref.model;
         var models = ref.models;
         var internal = model
-          ? model === this$1
-          : underscore.every(models, function (model) { return model === this$1; });
-        this$1._bindings[key] = { binding: binding, internal: internal };
+          ? model === this$1$1
+          : underscore.every(models, function (model) { return model === this$1$1; });
+        this$1$1._bindings[key] = { binding: binding, internal: internal };
 
-        this$1.listenTo(binding, 'change', function (_, options) {
-          backbone.Model.prototype.set.call(this$1, key, getValue(binding), options);
+        this$1$1.listenTo(binding, 'change', function (_, options) {
+          backbone.Model.prototype.set.call(this$1$1, key, getValue(binding), options);
         });
 
-        backbone.Model.prototype.set.call(this$1, key, getValue(binding), { silent: true });
+        backbone.Model.prototype.set.call(this$1$1, key, getValue(binding), { silent: true });
       };
 
       if (underscore.isString(key)) {
@@ -367,7 +367,7 @@
     },
 
     render: function render() {
-      var this$1 = this;
+      var this$1$1 = this;
 
       // First, mark all components for removal and clean subview rendering slate
       // (added components will remove this mark)
@@ -377,24 +377,26 @@
       this._rendered = {};
 
       var data = this.templateData();
-      var html = this.template(data);
+      // https://handlebarsjs.com/api-reference/runtime-options.html#options-to-control-prototype-access
+      // Allow view to pass through runtime options such as allowedProtoMethods and allowedProtoProperties
+      var html = this.template(data, data.handlebarsRuntimeOptions);
       this.$el.html(html);
 
       // Render active components and remove inactive
       underscore.each(this._components, function (component, id) {
         if (component._to_be_removed) {
           component.remove();
-          delete this$1._components[id];
+          delete this$1$1._components[id];
           return;
         }
 
-        this$1.$('[data-placeholder="' + id + '"]').replaceWith(component.el);
+        this$1$1.$('[data-placeholder="' + id + '"]').replaceWith(component.el);
         component.render();
       });
 
       // Render active subviews
       underscore.each(this._rendered, function (view, id) {
-        this$1.$('[data-placeholder="' + id + '"]').replaceWith(view.el);
+        this$1$1.$('[data-placeholder="' + id + '"]').replaceWith(view.el);
         view.render();
       });
 
@@ -459,7 +461,7 @@
       },
 
       render: function render() {
-        var this$1 = this;
+        var this$1$1 = this;
 
         View.prototype.render.apply(this, arguments);
 
@@ -476,13 +478,13 @@
             return;
           }
 
-          this$1.$('[data-placeholder="' + id + '"]').replaceWith(component.el);
+          this$1$1.$('[data-placeholder="' + id + '"]').replaceWith(component.el);
           component.render();
         });
 
         // Render active subviews
         underscore.each(this._rendered, function (view, id) {
-          this$1.$('[data-placeholder="' + id + '"]').replaceWith(view.el);
+          this$1$1.$('[data-placeholder="' + id + '"]').replaceWith(view.el);
           view.render();
         });
 
@@ -569,7 +571,7 @@
     template: function () { return '<script data-outlet></script>'; },
 
     initialize: function initialize() {
-      var this$1 = this;
+      var this$1$1 = this;
 
       if (this.model) {
         this.listenTo(this.model, 'change', this.render);
@@ -577,7 +579,7 @@
 
       this.listenTo(this.props, 'change:binding', this.render);
       this.props.get('bindings').forEach(function (binding) {
-        this$1.listenTo(binding, 'change', this$1.render);
+        this$1$1.listenTo(binding, 'change', this$1$1.render);
       });
     },
 
@@ -597,10 +599,10 @@
 
   Region.registerAs('region');
 
-  var noop$2 = function () {};
+  var noop$1 = function () {};
 
   function Listener(model, keys) {
-    var this$1 = this;
+    var this$1$1 = this;
 
     var sources = [];
     var models = [];
@@ -637,14 +639,14 @@
       });
     }
 
-    this.get = noop$2;
-    this.set = noop$2;
+    this.get = noop$1;
+    this.set = noop$1;
 
     sources.forEach(function (ref) {
       var source = ref[0];
       var events = ref[1];
 
-      this$1.listenTo(source, events, function () { return this$1.trigger('change'); });
+      this$1$1.listenTo(source, events, function () { return this$1$1.trigger('change'); });
     });
 
     this._binding = { type: 'listener', models: underscore.unique(models), bindings: bindings };
@@ -656,20 +658,20 @@
     return new Listener(model, keys);
   }
 
-  var noop$3 = function () {};
+  var noop = function () {};
 
   function Resolved(binding) {
-    var this$1 = this;
+    var this$1$1 = this;
 
     var current;
     var handle = function (value) {
       return Promise.resolve(value).then(
         function (result) {
           current = result;
-          this$1.trigger('change', current);
+          this$1$1.trigger('change', current);
         },
         function (error) {
-          this$1.trigger('error', error);
+          this$1$1.trigger('error', error);
         }
       );
     };
@@ -677,7 +679,7 @@
     handle(getValue(binding));
 
     this.get = function () { return current; };
-    this.set = noop$3;
+    this.set = noop;
 
     var models = [];
     if (isObservable(binding)) {
@@ -697,27 +699,25 @@
     return new Resolved(value);
   }
 
-  var version = "0.5.11";
+  var version = "0.5.12";
 
-  exports.Observable = Observable;
-  exports.observable = observable;
-  exports.isObservable = isObservable;
-  exports.getValue = getValue;
-  exports.setValue = setValue;
   exports.Binding = Binding;
-  exports.bound = bound;
-  exports.oneway = oneway;
-  exports.Computed = Computed;
-  exports.computed = computed;
-  exports.Listener = Listener;
-  exports.listener = listener;
-  exports.Resolved = Resolved;
-  exports.resolved = resolved;
   exports.BoundModel = BoundModel;
-  exports.View = View;
   exports.Component = Component;
+  exports.Computed = Computed;
+  exports.Listener = Listener;
+  exports.Observable = Observable;
+  exports.Resolved = Resolved;
   exports.VERSION = version;
+  exports.View = View;
+  exports.bound = bound$1;
+  exports.computed = computed$1;
+  exports.getValue = getValue;
+  exports.isObservable = isObservable;
+  exports.listener = listener;
+  exports.observable = observable;
+  exports.oneway = oneway$1;
+  exports.resolved = resolved;
+  exports.setValue = setValue;
 
-  Object.defineProperty(exports, '__esModule', { value: true });
-
-})));
+}));
