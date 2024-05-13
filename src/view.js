@@ -19,9 +19,7 @@ var View = BackboneView.extend({
     this._rendered = {};
 
     const data = this.templateData();
-    // Second argument allows view to pass handlebars runtime options such as allowedProtoMethods and allowedProtoProperties
-    // https://handlebarsjs.com/api-reference/runtime-options.html#options-to-control-prototype-access
-    const html = this.template(data, data.handlebarsRuntimeOptions);
+    const html = this.template(data);
     this.$el.html(html);
 
     // Render active components and remove inactive
