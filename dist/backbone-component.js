@@ -1,6 +1,6 @@
 /*!
  * backbone-component - Backbone + Handlebars components
- * v0.5.12 - https://github.com/CSNW/backbone-component - @license: MIT
+ * v0.5.13 - https://github.com/CSNW/backbone-component - @license: MIT
  */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('underscore'), require('handlebars'), require('backbone')) :
@@ -699,7 +699,7 @@
     return new Resolved(value);
   }
 
-  var version = "0.5.12";
+  var version = "0.5.13";
 
   exports.Binding = Binding;
   exports.BoundModel = BoundModel;
