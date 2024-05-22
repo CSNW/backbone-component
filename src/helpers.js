@@ -1,5 +1,6 @@
 import { isString, isFunction } from 'underscore';
-import { registerHelper, SafeString } from 'handlebars';
+import { SafeString } from 'handlebars';
+import handlebars from 'handlebars';
 import { isObservable, getValue } from './observable';
 import Binding from './binding';
 import Computed from './computed';
@@ -92,14 +93,14 @@ function object(options) {
   return (options && options.hash) || {};
 }
 
-registerHelper('placeholder', placeholder);
-registerHelper('outlet', outlet);
-registerHelper('render', render);
-registerHelper('get', get);
-registerHelper('bound', bound);
-registerHelper('oneway', oneway);
-registerHelper('computed', computed);
-registerHelper('eq', eq);
-registerHelper('not', not);
-registerHelper('array', array);
-registerHelper('object', object);
+handlebars.registerHelper('placeholder', placeholder);
+handlebars.registerHelper('outlet', outlet);
+handlebars.registerHelper('render', render);
+handlebars.registerHelper('get', get);
+handlebars.registerHelper('bound', bound);
+handlebars.registerHelper('oneway', oneway);
+handlebars.registerHelper('computed', computed);
+handlebars.registerHelper('eq', eq);
+handlebars.registerHelper('not', not);
+handlebars.registerHelper('array', array);
+handlebars.registerHelper('object', object);
