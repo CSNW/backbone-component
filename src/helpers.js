@@ -1,6 +1,5 @@
 import { isString, isFunction } from 'underscore';
-import { SafeString } from 'handlebars';
-import handlebars from 'handlebars';
+import handlebars, { SafeString } from 'handlebars';
 import { isObservable, getValue } from './observable';
 import Binding from './binding';
 import Computed from './computed';
