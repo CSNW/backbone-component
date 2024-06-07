@@ -1,5 +1,5 @@
 import { extend, defaults, result, uniqueId, each, isString } from 'underscore';
-import { registerHelper, helpers, createFrame } from 'handlebars';
+import handlebars from 'handlebars';
 import View from './view';
 import BoundModel from './bound-model';
 
@@ -67,7 +67,7 @@ var Component = View.extend(
   {
     registerAs: function(name) {
       var Type = this;
-      registerHelper(name, function(id, view, options) {
+      handlebars.registerHelper(name, function(id, view, options) {
         if (!view) {
           options = id;
           view =
@@ -90,7 +90,7 @@ var Component = View.extend(
           options.hash || {}
         );
         const data =
-          options.fn && options.data ? createFrame(options.data) : {};
+          options.fn && options.data ? handlebars.createFrame(options.data) : {};
 
         let component = view._components[id];
         if (!component) component = view._components[id] = new Type({ props });
@@ -99,7 +99,7 @@ var Component = View.extend(
         component._to_be_removed = false;
         data.parent_component = component;
 
-        return helpers.placeholder(id);
+        return handlebars.helpers.placeholder(id);
 
         function children() {
           const html =
